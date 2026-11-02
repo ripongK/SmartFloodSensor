@@ -1,0 +1,2031 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SmartFlood Sentinel — แบบฝึกฝนเทียบเคียง PISA 2025 LDW</title>
+<style>
+:root{
+  --bg:#0d1b21;
+  --panel:#132a32;
+  --panel-2:#173540;
+  --line:#24444f;
+  --ink:#e9f3f1;
+  --ink-dim:#a9c2c2;
+  --teal:#37b7c2;
+  --teal-dim:#1f6d78;
+  --safe:#4fae7a;
+  --watch:#e0a63c;
+  --crit:#e0604f;
+  --logic:#b385d6;
+  --sensing:#4f92c9;
+  --data-c:#5fae64;
+  --control:#d98b3f;
+  --event-c:#3aa6a0;
+  --font: 'Sarabun', 'Noto Sans Thai', system-ui, sans-serif;
+}
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:var(--font);
+  background:
+    radial-gradient(1200px 600px at 90% -10%, #113b42 0%, transparent 60%),
+    linear-gradient(180deg,#0a161b,#0d1b21 40%);
+  color:var(--ink);
+  min-height:100vh;
+  line-height:1.6;
+}
+.wrap{max-width:980px;margin:0 auto;padding:18px 16px 60px;}
+h1,h2,h3{font-weight:600;margin:0 0 8px;}
+p{margin:0 0 10px;}
+button{font-family:inherit;cursor:pointer;}
+.hidden{display:none !important;}
+
+/* ---------- header ---------- */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  position:sticky;top:0;z-index:20;
+  background:rgba(13,27,33,.92);backdrop-filter:blur(6px);
+}
+.brand{display:flex;align-items:center;gap:10px;}
+.brand .mark{
+  width:34px;height:34px;border-radius:8px;
+  background:linear-gradient(160deg,var(--teal),var(--teal-dim));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+  box-shadow:0 0 0 1px rgba(255,255,255,.08) inset;
+}
+.brand .name{font-size:14px;letter-spacing:.02em;color:var(--ink-dim);}
+.brand .name b{color:var(--ink);font-size:16px;display:block;}
+.student-badge{
+  display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-dim);
+  background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 14px;
+}
+.student-badge b{color:var(--ink);}
+.help-btn{
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:999px;padding:7px 12px;font-size:13px;
+}
+.help-btn:hover{border-color:var(--teal);}
+
+/* ---------- gauge progress ---------- */
+.gauge{margin:16px 0 22px;}
+.gauge-row{display:flex;gap:4px;height:10px;border-radius:6px;overflow:hidden;background:#0a1b20;border:1px solid var(--line);}
+.gauge-seg{flex:1;position:relative;background:transparent;}
+.gauge-seg .fill{position:absolute;inset:0;width:0%;transition:width .4s ease;}
+.gauge-seg[data-stage="show"] .fill{background:var(--sensing);}
+.gauge-seg[data-stage="learn"] .fill{background:var(--event-c);}
+.gauge-seg[data-stage="apply"] .fill{background:var(--control);}
+.gauge-seg[data-stage="reflect"] .fill{background:var(--logic);}
+.gauge-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:12px;color:var(--ink-dim);}
+.gauge-labels span.active{color:var(--ink);font-weight:600;}
+
+/* ---------- panels / cards ---------- */
+.panel{
+  background:var(--panel);border:1px solid var(--line);
+  border-left:4px solid var(--teal);
+  border-radius:10px;padding:20px 22px;margin-bottom:16px;
+}
+.panel.stage-show{border-left-color:var(--sensing);}
+.panel.stage-learn{border-left-color:var(--event-c);}
+.panel.stage-apply{border-left-color:var(--control);}
+.panel.stage-reflect{border-left-color:var(--logic);}
+.eyebrow{font-size:12.5px;color:var(--ink-dim);margin-bottom:2px;}
+.tag{
+  display:inline-block;font-size:11.5px;padding:2px 9px;border-radius:999px;
+  background:var(--panel-2);color:var(--ink-dim);border:1px solid var(--line);margin-right:6px;
+}
+
+/* ---------- login screen ---------- */
+.login-card{max-width:560px;margin:40px auto 0;}
+.test-meta{display:flex;flex-wrap:wrap;gap:8px 14px;margin:2px 0 18px;}
+.test-meta-item{
+  display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-dim);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:6px 14px;
+}
+.test-meta-item b{color:var(--ink);font-weight:600;}
+
+/* ---------- login hero illustration (decorative only) ---------- */
+.hero-illust{margin:-4px -4px 14px;border-radius:8px;overflow:hidden;background:linear-gradient(180deg,#0e232a,#0a1a1f);}
+.hero-illust svg{display:block;width:100%;height:auto;}
+.hero-rain .hero-drop{animation:heroRainFall 1.4s linear infinite;}
+.hero-rain .d1{animation-delay:0s;}
+.hero-rain .d2{animation-delay:.35s;}
+.hero-rain .d3{animation-delay:.7s;}
+.hero-rain .d4{animation-delay:1.05s;}
+@keyframes heroRainFall{
+  0%{transform:translateY(-6px);opacity:0;}
+  15%{opacity:1;}
+  80%{opacity:1;}
+  100%{transform:translateY(14px);opacity:0;}
+}
+.hero-wave{animation:heroWaveShift 5s ease-in-out infinite alternate;}
+@keyframes heroWaveShift{ 0%{transform:translateX(0);} 100%{transform:translateX(-10px);} }
+.hero-marker{animation:heroMarkerBob 2.6s ease-in-out infinite;}
+@keyframes heroMarkerBob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-4px);} }
+.hero-light{animation:heroBlink 1.6s ease-in-out infinite;}
+@keyframes heroBlink{ 0%,100%{opacity:1;} 50%{opacity:.35;} }
+.hero-signal .s1,.hero-signal .s2{animation:heroSignal 1.8s ease-out infinite;}
+.hero-signal .s2{animation-delay:.5s;}
+@keyframes heroSignal{ 0%{opacity:0;} 20%{opacity:1;} 100%{opacity:0;} }
+@media (prefers-reduced-motion: reduce){
+  .hero-illust *{animation:none !important;}
+}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:13.5px;color:var(--ink-dim);margin-bottom:6px;}
+.field input[type=text], .field select{
+  width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line);
+  background:#0e2027;color:var(--ink);font-size:15px;font-family:inherit;
+}
+.field input:focus, .field select:focus{outline:2px solid var(--teal);outline-offset:1px;}
+.grade-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.grade-opt{
+  border:1px solid var(--line);background:#0e2027;border-radius:8px;padding:10px;text-align:center;
+  font-size:14px;color:var(--ink-dim);
+}
+.grade-opt.selected{border-color:var(--teal);color:var(--ink);background:#0f2d33;}
+
+/* ---------- buttons ---------- */
+.btn{
+  border-radius:8px;padding:11px 20px;font-size:15px;border:1px solid var(--teal);
+  background:var(--teal);color:#03181b;font-weight:600;
+}
+.btn:hover{filter:brightness(1.08);}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none;}
+.btn.secondary{background:transparent;color:var(--ink);border-color:var(--line);font-weight:500;}
+.btn.secondary:hover{border-color:var(--ink-dim);}
+.btn-row{display:flex;justify-content:space-between;gap:10px;margin-top:18px;}
+
+/* ---------- MCQ ---------- */
+.q-text{font-size:16.5px;margin-bottom:14px;}
+.opt-list{display:flex;flex-direction:column;gap:8px;}
+.opt{
+  text-align:left;padding:12px 14px;border-radius:8px;border:1px solid var(--line);
+  background:#0e2027;color:var(--ink);font-size:14.5px;display:flex;gap:10px;align-items:flex-start;
+}
+.opt .letter{
+  flex:none;width:22px;height:22px;border-radius:6px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink-dim);
+}
+.opt.selected{border-color:var(--teal);background:#0f2d33;}
+.opt.selected .letter{border-color:var(--teal);color:var(--teal);background:rgba(55,183,194,.12);}
+
+/* ---------- hint / glossary ---------- */
+.hint-toggle{font-size:13px;color:var(--teal);background:none;border:none;padding:4px 0;text-decoration:underline dotted;}
+.hint-box{
+  font-size:13.5px;color:var(--ink-dim);background:var(--panel-2);border:1px dashed var(--line);
+  border-radius:8px;padding:10px 12px;margin-top:8px;
+}
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(4,10,13,.7);display:flex;align-items:center;justify-content:center;
+  z-index:100;padding:20px;
+}
+.modal{
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:22px 24px;
+  max-width:520px;width:100%;max-height:80vh;overflow:auto;
+}
+.modal h3{display:flex;justify-content:space-between;align-items:center;}
+.modal .x{background:none;border:none;color:var(--ink-dim);font-size:20px;line-height:1;}
+.gloss-item{border-bottom:1px solid var(--line);padding:10px 0;}
+.gloss-item:last-child{border-bottom:none;}
+.gloss-term{color:var(--teal);font-weight:600;font-size:14px;}
+.gloss-def{font-size:13.5px;color:var(--ink-dim);margin-top:3px;}
+.fab{
+  position:fixed;right:18px;bottom:18px;z-index:30;
+  background:var(--panel);border:1px solid var(--line);color:var(--ink);
+  border-radius:999px;padding:10px 16px;font-size:13.5px;box-shadow:0 4px 18px rgba(0,0,0,.4);
+}
+
+/* ---------- chart wrap ---------- */
+.chart-box{background:#0a1b20;border:1px solid var(--line);border-radius:8px;padding:14px;margin:14px 0;}
+.metric-row{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0;}
+.metric{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:140px;
+}
+.metric .label{font-size:12px;color:var(--ink-dim);}
+.metric .value{font-size:20px;font-weight:600;}
+.metric.pass .value{color:var(--safe);}
+.metric.fail .value{color:var(--crit);}
+
+/* ---------- sliders ---------- */
+.slider-row{margin:14px 0;}
+.slider-row label{display:flex;justify-content:space-between;font-size:13.5px;color:var(--ink-dim);margin-bottom:6px;}
+.slider-row label b{color:var(--ink);}
+input[type=range]{width:100%;accent-color:var(--teal);}
+
+/* ---------- block editor ---------- */
+.block-editor{display:flex;flex-direction:column;gap:14px;margin:14px 0;}
+.block-zone{border:1px solid var(--line);border-radius:8px;padding:12px;background:#0a1b20;}
+.block-zone h4{margin:0 0 10px;font-size:13px;color:var(--ink-dim);font-weight:600;}
+.block-list{display:flex;flex-direction:column;gap:8px;min-height:40px;}
+.block-chip{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px 8px 8px 2px;
+  color:#04181a;font-size:14px;font-weight:500;position:relative;cursor:grab;
+  border-bottom:3px solid rgba(0,0,0,.18);
+}
+.block-chip.k-event{background:var(--event-c);}
+.block-chip.k-sensing{background:var(--sensing);color:#fff;}
+.block-chip.k-data{background:var(--data-c);}
+.block-chip.k-control{background:var(--control);}
+.block-chip.k-logic{background:var(--logic);color:#fff;}
+.block-chip .idx{font-size:11px;opacity:.75;flex:none;width:18px;}
+.block-chip .lbl{flex:1;}
+.block-chip .mini-btn{
+  border:none;background:rgba(0,0,0,.18);color:inherit;border-radius:5px;width:24px;height:24px;font-size:13px;flex:none;
+}
+.block-chip.in-program{cursor:grab;}
+.block-chip.dragging{opacity:.35;}
+.placeholder-row{font-size:13px;color:var(--ink-dim);font-style:italic;padding:8px 4px;}
+
+/* ---------- Scratch-like block shaping + drag & drop ---------- */
+.block-chip{
+  position:relative;
+  border-radius:6px 6px 6px 6px;
+  box-shadow:0 2px 0 rgba(0,0,0,.22);
+  padding-left:16px;
+}
+/* top notch (socket) */
+.block-chip::before{
+  content:"";position:absolute;top:-1px;left:14px;width:16px;height:5px;
+  background:rgba(0,0,0,.16);border-radius:0 0 5px 5px;
+}
+/* bottom tab (plug) */
+.block-chip::after{
+  content:"";position:absolute;bottom:-5px;left:14px;width:16px;height:5px;
+  background:inherit;border-radius:0 0 5px 5px;
+}
+.block-chip.k-control::before,.block-chip.k-logic::before{background:rgba(0,0,0,.2);}
+.block-list{position:relative;}
+.block-zone.drop-active{border-color:var(--teal);background:#0c2229;}
+.drop-marker{
+  height:4px;border-radius:3px;background:var(--teal);margin:2px 0;
+  box-shadow:0 0 8px rgba(55,183,194,.7);
+}
+.block-chip .grip{opacity:.55;font-size:13px;cursor:grab;flex:none;}
+.block-chip.decoy-hint{outline:1px dashed rgba(255,255,255,.35);}
+.dnd-hint{font-size:12.5px;color:var(--ink-dim);margin:0 0 8px;}
+
+/* ---------- debug task: error list ---------- */
+.bug-list{
+  background:rgba(224,96,79,.09);border:1px solid rgba(224,96,79,.45);
+  border-radius:8px;padding:12px 14px;margin:12px 0;
+}
+.bug-list h4{margin:0 0 8px;font-size:13.5px;color:var(--crit);font-weight:600;}
+.bug-list ul{margin:0;padding-left:18px;}
+.bug-list li{font-size:13.5px;color:var(--ink-dim);margin-bottom:5px;}
+.bug-list li:last-child{margin-bottom:0;}
+
+/* ---------- sensor→cloud test visualization ---------- */
+.sim-stage{background:#0a1b20;border:1px solid var(--line);border-radius:8px;padding:10px;margin:12px 0;}
+.sim-stage svg{display:block;width:100%;height:auto;}
+.sim-beam{stroke-dasharray:5 5;animation:simBeamFlow 1.1s linear infinite;}
+@keyframes simBeamFlow{to{stroke-dashoffset:-20;}}
+.sim-buoy{animation:simBob 2.6s ease-in-out infinite;}
+@keyframes simBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+@media (prefers-reduced-motion: reduce){
+  .sim-beam,.sim-buoy{animation:none !important;}
+}
+
+/* ---------- report ---------- */
+.score-hero{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+.score-num{font-size:48px;font-weight:700;color:var(--teal);}
+.level-badge{
+  display:inline-block;padding:6px 16px;border-radius:999px;font-size:14px;font-weight:600;margin-top:6px;
+}
+.lv-4{background:rgba(79,174,122,.18);color:var(--safe);border:1px solid var(--safe);}
+.lv-3{background:rgba(55,183,194,.18);color:var(--teal);border:1px solid var(--teal);}
+.lv-2{background:rgba(224,166,60,.18);color:var(--watch);border:1px solid var(--watch);}
+.lv-1{background:rgba(224,96,79,.18);color:var(--crit);border:1px solid var(--crit);}
+table.hist{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:10px;}
+table.hist th, table.hist td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;}
+table.hist th{color:var(--ink-dim);font-weight:600;font-size:12.5px;}
+.save-status{font-size:13px;color:var(--ink-dim);margin-top:10px;}
+.save-status.ok{color:var(--safe);}
+.save-status.err{color:var(--crit);}
+
+textarea{
+  width:100%;min-height:90px;border-radius:8px;border:1px solid var(--line);background:#0e2027;
+  color:var(--ink);padding:11px 12px;font-family:inherit;font-size:14.5px;resize:vertical;
+}
+.likert-row{display:flex;justify-content:space-between;gap:6px;margin-top:8px;}
+.likert-opt{
+  flex:1;text-align:center;padding:9px 4px;border-radius:8px;border:1px solid var(--line);
+  background:#0e2027;font-size:12.5px;color:var(--ink-dim);
+}
+.likert-opt.selected{border-color:var(--logic);color:var(--ink);background:rgba(179,133,214,.14);}
+.reflect-item{margin-bottom:22px;}
+.reflect-item:last-child{margin-bottom:0;}
+
+@media (max-width:640px){
+  .score-num{font-size:36px;}
+  .grade-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="mark">🌊</div>
+    <div class="name">SmartFlood Sentinel<b>แบบฝึกฝนเทียบเคียง PISA 2025 · LDW</b></div>
+  </div>
+  <div id="studentBadge" class="student-badge hidden"></div>
+</div>
+
+<div class="wrap">
+
+  <div id="gauge" class="gauge hidden">
+    <div class="gauge-row">
+      <div class="gauge-seg" data-stage="show"><div class="fill"></div></div>
+      <div class="gauge-seg" data-stage="learn"><div class="fill"></div></div>
+      <div class="gauge-seg" data-stage="apply"><div class="fill"></div></div>
+      <div class="gauge-seg" data-stage="reflect"><div class="fill"></div></div>
+    </div>
+    <div class="gauge-labels">
+      <span data-stage="show">Show</span>
+      <span data-stage="learn">Learn</span>
+      <span data-stage="apply">Apply</span>
+      <span data-stage="reflect">Reflect</span>
+    </div>
+  </div>
+
+  <div id="screen-login" class="screen">
+    <div class="panel login-card">
+      <div class="hero-illust" aria-hidden="true">
+  <svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" role="img">
+    <!-- sky glow -->
+    <defs>
+      <linearGradient id="riverGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#1f6d78"/>
+        <stop offset="100%" stop-color="#0f3b42"/>
+      </linearGradient>
+      <linearGradient id="gaugeGrad" x1="0" y1="1" x2="0" y2="0">
+        <stop offset="0%" stop-color="#4fae7a"/>
+        <stop offset="55%" stop-color="#e0a63c"/>
+        <stop offset="100%" stop-color="#e0604f"/>
+      </linearGradient>
+    </defs>
+
+    <!-- rain cloud -->
+    <g class="hero-cloud">
+      <ellipse cx="88" cy="46" rx="34" ry="18" fill="#9fb9c2" opacity="0.85"/>
+      <ellipse cx="65" cy="52" rx="22" ry="14" fill="#9fb9c2" opacity="0.85"/>
+      <ellipse cx="112" cy="54" rx="24" ry="15" fill="#9fb9c2" opacity="0.85"/>
+    </g>
+    <g class="hero-rain" stroke="#6fb6c4" stroke-width="3" stroke-linecap="round">
+      <line class="hero-drop d1" x1="60" y1="70" x2="55" y2="86"/>
+      <line class="hero-drop d2" x1="82" y1="72" x2="77" y2="90"/>
+      <line class="hero-drop d3" x1="104" y1="70" x2="99" y2="86"/>
+      <line class="hero-drop d4" x1="126" y1="74" x2="121" y2="90"/>
+    </g>
+
+    <!-- river -->
+    <path d="M0,168 C 90,150 150,182 240,166 C 330,150 380,180 470,164 C 540,152 590,168 640,158 L640,200 L0,200 Z" fill="url(#riverGrad)"/>
+    <path class="hero-wave" d="M0,164 C 90,148 150,178 240,162 C 330,148 380,176 470,160 C 540,150 590,164 640,154" fill="none" stroke="#37b7c2" stroke-width="2.5" opacity="0.55"/>
+
+    <!-- water level gauge -->
+    <g class="hero-gauge" transform="translate(300,0)">
+      <rect x="0" y="38" width="14" height="128" rx="6" fill="url(#gaugeGrad)" opacity="0.9"/>
+      <line x1="-6" y1="128" x2="20" y2="128" stroke="#0d1b21" stroke-width="2"/>
+      <line x1="-6" y1="104" x2="20" y2="104" stroke="#0d1b21" stroke-width="2"/>
+      <line x1="-6" y1="80" x2="20" y2="80" stroke="#0d1b21" stroke-width="2"/>
+      <line class="hero-critline" x1="-10" y1="62" x2="24" y2="62" stroke="#ffffff" stroke-width="2" stroke-dasharray="4,3"/>
+      <circle class="hero-marker" cx="7" cy="88" r="7" fill="#0d1b21" stroke="#ffffff" stroke-width="2.5"/>
+      <text x="30" y="66" font-size="11" fill="#e0604f" font-family="Sarabun, sans-serif">วิกฤต</text>
+    </g>
+
+    <!-- sensor / agent node -->
+    <g class="hero-sensor" transform="translate(490,0)">
+      <line x1="15" y1="168" x2="15" y2="112" stroke="#3aa6a0" stroke-width="4" stroke-linecap="round"/>
+      <rect x="-8" y="86" width="46" height="30" rx="9" fill="#1f6d78" stroke="#37b7c2" stroke-width="1.5"/>
+      <circle class="hero-light" cx="15" cy="101" r="6" fill="#e0a63c"/>
+      <line x1="15" y1="86" x2="15" y2="66" stroke="#37b7c2" stroke-width="2.5" stroke-linecap="round"/>
+      <circle cx="15" cy="64" r="3" fill="#37b7c2"/>
+      <g class="hero-signal" stroke="#37b7c2" stroke-width="2" fill="none" stroke-linecap="round">
+        <path class="s1" d="M24,58 Q40,46 52,34"/>
+        <path class="s2" d="M30,50 Q46,36 60,22"/>
+      </g>
+    </g>
+
+    <!-- control center cloud -->
+    <g class="hero-center" transform="translate(560,10)">
+      <rect x="0" y="8" width="52" height="34" rx="10" fill="#173540" stroke="#3aa6a0" stroke-width="1.5"/>
+      <circle cx="14" cy="25" r="3" fill="#4fae7a"/>
+      <line x1="22" y1="19" x2="42" y2="19" stroke="#a9c2c2" stroke-width="2" stroke-linecap="round"/>
+      <line x1="22" y1="25" x2="38" y2="25" stroke="#a9c2c2" stroke-width="2" stroke-linecap="round"/>
+      <line x1="22" y1="31" x2="34" y2="31" stroke="#a9c2c2" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </svg>
+</div>
+      <div class="eyebrow">สถานการณ์จำลอง</div>
+      <h1>เครือข่ายเซนเซอร์เฝ้าระวังน้ำท่วมอัจฉริยะ</h1>
+      <p style="color:var(--ink-dim)">
+        เทศบาลตำบลแม่จาง ประสบปัญหาภัยน้ำท่วมบ่อยครั้ง สร้างความเดือดร้อนต่อประชาชนที่อาศัยริมน้ำแม่จาง
+        คณะผู้บริหารเทศบาลตำบลแม่จาง จึงว่าจ้างคณะผู้พัฒนาระบบ IoT ให้เขียนโปรแกรมสั่งงาน
+        <b>ทุ่นหุ่นยนต์เซนเซอร์เสมือน (Virtual Sensor Agent)</b> ตรวจวัดระดับน้ำและปริมาณน้ำฝน
+        วางทุ่นกระจายตามจุดเสี่ยงที่สำคัญ และนำข้อมูลจากทุ่นหุ่นยนต์เซนเซอร์ทุกตัวมาวิเคราะห์ข้อมูลจากการจำลอง
+        สถานการณ์ฝนตกหนัก เพื่อออกแบบระบบเตือนภัยจากน้ำท่วมแบบอัจฉริยะที่แม่นยำที่สุด
+        <b>คุณได้รับบทบาทเป็นส่วนหนึ่งของผู้รับจ้างพัฒนาระบบ IoT ของเครือข่ายเซนเซอร์เฝ้าระวังน้ำท่วมอัจฉริยะ</b>
+      </p>
+      <div class="test-meta">
+        <span class="test-meta-item">⏱ ใช้เวลาประมาณ 30 นาที</span>
+        <span class="test-meta-item">🧭 4 ขั้นตอน: <b>Show → Learn → Apply → Reflect</b></span>
+      </div>
+      <div class="field">
+        <label>ชื่อ-นามสกุล ผู้เข้าทดสอบ</label>
+        <input type="text" id="inputName" placeholder="พิมพ์ชื่อของคุณ">
+      </div>
+      <div class="field">
+        <label>ระดับชั้น</label>
+        <select id="gradeSelect">
+          <option value="" selected disabled>— เลือกระดับชั้น —</option>
+          <option value="ม.2">มัธยมศึกษาปีที่ 2</option>
+          <option value="ม.3">มัธยมศึกษาปีที่ 3</option>
+          <option value="ม.4">มัธยมศึกษาปีที่ 4</option>
+          <option value="ปวช.">ปวช.</option>
+        </select>
+      </div>
+      <div class="btn-row" style="justify-content:flex-end">
+        <button class="btn" id="btnStart">เริ่มทำแบบทดสอบ</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="screen-show" class="screen hidden"></div>
+  <div id="screen-learn" class="screen hidden"></div>
+  <div id="screen-apply" class="screen hidden"></div>
+  <div id="screen-reflect" class="screen hidden"></div>
+  <div id="screen-report" class="screen hidden"></div>
+
+</div>
+
+<button id="fabHelp" class="fab hidden">📖 คำศัพท์ช่วยเหลือ</button>
+
+<div id="glossModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <h3>คำศัพท์ช่วยเหลือ <button class="x" id="glossClose">✕</button></h3>
+    <div id="glossList"></div>
+  </div>
+</div>
+
+<script>
+/* =======================================================================
+   SmartFlood Sentinel — PISA 2025 LDW practice test
+   Data definitions: SHOW / LEARN / APPLY / REFLECT / glossary
+   ======================================================================= */
+
+const GLOSSARY = [
+  ["การจำลองสถานการณ์ (Simulation)", "การสร้างแบบจำลองด้วยคอมพิวเตอร์เพื่อเลียนแบบการทำงานของระบบจริง โดยไม่ต้องใช้ระบบจริง"],
+  ["ตัวแทนดิจิทัล (Digital Agent)", "โปรแกรมหรือหุ่นจำลองที่ถูกสั่งงานด้วยบล็อกคำสั่ง/โค้ด ให้ทำงานแทนมนุษย์ในสภาพแวดล้อมดิจิทัล เช่น เซนเซอร์เสมือน"],
+  ["บล็อกลำดับ (Sequence Block)", "ชุดคำสั่งที่ทำงานเรียงต่อกันทีละขั้นตอนตามลำดับที่วางไว้"],
+  ["บล็อกเงื่อนไข (Conditional / If-Then)", "คำสั่งที่ทำงานเฉพาะเมื่อเงื่อนไขที่กำหนดเป็นจริงเท่านั้น"],
+  ["บล็อกวนซ้ำ (Loop)", "คำสั่งที่ทำให้ชุดคำสั่งภายในทำงานซ้ำไปเรื่อย ๆ จนกว่าจะครบเงื่อนไขที่กำหนด"],
+  ["เกณฑ์ (Threshold)", "ค่าตัวเลขที่กำหนดเป็นจุดตัดสินใจ เมื่อค่าที่วัดได้ถึงหรือเกินค่านี้ ระบบจะเปลี่ยนสถานะ/ส่งสัญญาณ"],
+  ["ความถี่การตรวจวัด (Sampling Frequency)", "จำนวนครั้งที่เซนเซอร์ตรวจวัดค่าในหนึ่งหน่วยเวลา ยิ่งถี่ยิ่งแม่นยำแต่ใช้พลังงานมากขึ้น"],
+  ["สัญญาณเตือนที่ผิดพลาด (False Alarm)", "การที่ระบบแจ้งเตือนภัยทั้งที่ไม่ได้เกิดเหตุการณ์จริง"],
+  ["เวลานำหน้า (Lead Time)", "ระยะเวลาที่ระบบแจ้งเตือนล่วงหน้าก่อนเหตุการณ์จริงจะเกิดขึ้น"],
+  ["คะแนนความเสี่ยง (Risk Score)", "ค่าคะแนนที่คำนวณจากหลายปัจจัยรวมกัน เพื่อประเมินระดับความเสี่ยงของสถานการณ์"],
+  ["ความหน่วงเวลา (Lag)", "ช่วงเวลาที่ผลลัพธ์ (เช่น ระดับน้ำสูงสุด) เกิดขึ้นตามหลังสาเหตุ (เช่น ฝนตกหนัก)"]
+];
+
+/* ---------------- SHOW (5 ข้อ, 4 ตัวเลือก) ---------------- */
+const SHOW_QUESTIONS = [
+  {
+    id: "s1",
+    text: "การจำลองสถานการณ์ (Simulation) ในทางคอมพิวเตอร์ หมายถึงข้อใด",
+    options: [
+      "การสร้างแบบจำลองด้วยคอมพิวเตอร์เพื่อเลียนแบบการทำงานของระบบจริง โดยไม่ต้องใช้ระบบจริง",
+      "การคัดลอกข้อมูลจากเครื่องหนึ่งไปอีกเครื่องหนึ่ง",
+      "การถ่ายภาพหน้าจอคอมพิวเตอร์เพื่อเก็บเป็นหลักฐาน",
+      "การเชื่อมต่ออินเทอร์เน็ตความเร็วสูงระหว่างอุปกรณ์"
+    ],
+    correct: 0
+  },
+  {
+    id: "s2",
+    text: "ตัวแทนดิจิทัล (Digital Agent) ในระบบอัตโนมัติ หมายถึงข้อใด",
+    options: [
+      "พนักงานขายสินค้าออนไลน์",
+      "ไฟล์เอกสารที่จัดเก็บในคลาวด์",
+      "โปรแกรมหรือหุ่นจำลองที่ถูกสั่งงานด้วยคำสั่ง (โค้ด/บล็อกคำสั่ง) ให้ทำงานแทนมนุษย์ในสภาพแวดล้อมดิจิทัล",
+      "บัญชีผู้ใช้งานโซเชียลมีเดีย"
+    ],
+    correct: 2
+  },
+  {
+    id: "s3",
+    text: "จากกราฟระดับน้ำในรอบ 24 ชั่วโมง ข้อใดอธิบายแนวโน้มได้ถูกต้องที่สุด",
+    chart: { type: "line", labels: [0,4,8,12,16,20,24], data: [90,95,110,140,155,150,148], label: "ระดับน้ำ (ซม.)" },
+    options: [
+      "ระดับน้ำลดลงตลอดทั้งวัน",
+      "ระดับน้ำคงที่ตลอด 24 ชั่วโมง",
+      "ระดับน้ำเพิ่มขึ้นและลดลงสลับกันทุก 4 ชั่วโมง",
+      "ระดับน้ำเพิ่มขึ้นอย่างต่อเนื่องช่วงเช้าถึงบ่าย แล้วเริ่มทรงตัว/ลดลงเล็กน้อยช่วงเย็น"
+    ],
+    correct: 3
+  },
+  {
+    id: "s4",
+    text: "บล็อกคำสั่ง “ถ้า…แล้ว…” (If-Then) ในการเขียนโปรแกรมแบบบล็อก มีหน้าที่ใด",
+    options: [
+      "ทำให้โปรแกรมหยุดทำงานทันที",
+      "สั่งให้ระบบทำงานตามเงื่อนไขที่กำหนดเท่านั้น เช่น ถ้าค่าที่วัดได้เกินกำหนด จึงจะทำอีกคำสั่งหนึ่งต่อ",
+      "เก็บข้อมูลลงหน่วยความจำถาวร",
+      "เชื่อมต่อกับอินเทอร์เน็ต"
+    ],
+    correct: 1
+  },
+  {
+    id: "s5",
+    text: "ในระบบเตือนภัย คำว่า “เกณฑ์ (Threshold)” หมายถึงข้อใด",
+    options: [
+      "จำนวนผู้ใช้งานระบบทั้งหมด",
+      "ราคาของอุปกรณ์เซนเซอร์",
+      "ระยะเวลาที่ใช้ในการติดตั้งระบบ",
+      "ค่าตัวเลขที่กำหนดไว้เป็นจุดตัดสินใจ เมื่อค่าที่วัดได้ถึงหรือเกินค่านี้ ระบบจะเปลี่ยนสถานะ/ส่งสัญญาณ"
+    ],
+    correct: 3
+  }
+];
+
+/* ---------------- LEARN (6 ภาระงานต่อเนื่อง) ---------------- */
+const LEARN_TASKS = [
+  {
+    id: "l1",
+    title: "ภาระงานที่ 1 · รู้จักเซนเซอร์วัดระดับน้ำ",
+    teach: "สถานีตรวจวัดริมแม่น้ำมีเซนเซอร์วัดระดับน้ำทุก 2 ชั่วโมง แล้วส่งข้อมูลเป็นกราฟเส้นแสดงแนวโน้มระดับน้ำใน 24 ชั่วโมงที่ผ่านมา",
+    chart: { type:"line", labels:[0,2,4,6,8,10,12,14,16,18,20,22,24],
+      datasets:[{label:"ระดับน้ำ (ซม.)", data:[95,96,98,102,108,118,132,150,168,182,190,188,180], color:"#37b7c2"}] },
+    questions: [
+      { id:"l1q1", text:"จากกราฟ ระดับน้ำสูงสุดในช่วง 24 ชั่วโมงอยู่ที่ประมาณเท่าใด",
+        options:["132 ซม. (ชั่วโมงที่ 12)","150 ซม. (ชั่วโมงที่ 14)","168 ซม. (ชั่วโมงที่ 16)","ประมาณ 190 ซม. (ชั่วโมงที่ 20)"], correct:3 },
+      { id:"l1q2", text:"ช่วงเวลาใดที่ระดับน้ำเพิ่มขึ้นเร็วที่สุด (กราฟชันที่สุด)",
+        options:["0–6 ชั่วโมง","18–24 ชั่วโมง","ระดับน้ำคงที่ตลอดทั้งวัน","8–18 ชั่วโมง"], correct:3 }
+    ]
+  },
+  {
+    id: "l2",
+    title: "ภาระงานที่ 2 · เรียงลำดับคำสั่งพื้นฐาน (Sequence Block)",
+    teach: "วิศวกร IoT ต้องการให้เซนเซอร์ทำงานเป็นวงจรดังนี้: หลังเริ่มทำงานครั้งแรก ให้ “วัดค่าระดับน้ำและปริมาณฝน” ก่อน จากนั้น “บันทึกค่าที่วัดได้ลงหน่วยความจำ” แล้วจึง “ส่งข้อมูลขึ้นเซิร์ฟเวอร์กลาง” จากนั้น “หยุดรอ 30 นาที” ก่อนจะ “กลับไปทำซ้ำ” วนไปเรื่อย ๆ จงลากบล็อกคำสั่งด้านล่างมาเรียงลำดับให้ตรงกับคำอธิบายนี้",
+    blockExercise: {
+      id: "l2be",
+      startLabel: "เริ่มทำงาน",
+      blocks: [
+        { id:"b_measure", label:"วัดระดับน้ำและปริมาณฝน", kind:"sensing" },
+        { id:"b_save", label:"บันทึกค่าในหน่วยความจำ", kind:"data" },
+        { id:"b_send", label:"ส่งข้อมูลขึ้นเซิร์ฟเวอร์กลาง", kind:"data" },
+        { id:"b_wait", label:"รอ 30 นาที", kind:"control" },
+        { id:"b_loop", label:"กลับไปทำซ้ำ", kind:"control" }
+      ],
+      correctOrder: ["b_measure","b_save","b_send","b_wait","b_loop"]
+    },
+    questions: [
+      { id:"l2q1", text:"ถ้าเปลี่ยนลำดับ โดยให้บล็อก “ส่งข้อมูลขึ้นเซิร์ฟเวอร์กลาง” ทำงานก่อนบล็อก “บันทึกค่าในหน่วยความจำ” จะเกิดผลอย่างไร",
+        options:["ระบบอาจส่งค่าที่ยังไม่ได้บันทึก หรือส่งค่าจากรอบก่อนหน้าซึ่งไม่ใช่ค่าล่าสุด ทำให้ข้อมูลผิดพลาด","ไม่มีผลกระทบใดๆ เพราะลำดับไม่สำคัญ","ระบบจะทำงานเร็วขึ้นสองเท่า","เซนเซอร์จะหยุดทำงานทันที"], correct:0 }
+    ]
+  },
+  {
+    id: "l3",
+    title: "ภาระงานที่ 3 · เงื่อนไขและเกณฑ์เตือนภัย (Conditional Block)",
+    teach: "ระบบกำหนด 3 ระดับ: ปกติ (< 150 ซม.) เฝ้าระวัง (150–219 ซม.) วิกฤต (≥ 220 ซม.) กราฟด้านล่างแสดงระดับน้ำ ณ จุดตรวจวัด 5 จุด",
+    chart: { type:"bar", labels:["จุด A","จุด B","จุด C","จุด D","จุด E"],
+      datasets:[{label:"ระดับน้ำ (ซม.)", data:[120,160,235,145,200], color:"#4f92c9"}] },
+    questions: [
+      { id:"l3q1", text:"จุดตรวจวัดใดอยู่ในระดับ “วิกฤต” (≥ 220 ซม.)", options:["จุด B","จุด C","จุด D","จุด E"], correct:1 },
+      { id:"l3q2", text:"ในบรรดาจุดที่อยู่ระดับ “เฝ้าระวัง” จุดใดใกล้ระดับวิกฤตมากที่สุด", options:["จุด B (160 ซม.)","จุด D (145 ซม.)","จุด E (200 ซม.)","ทุกจุดใกล้เคียงกัน"], correct:2 }
+    ],
+    blockExercise: {
+      id: "l3be",
+      startLabel: "รับค่าระดับน้ำล่าสุด",
+      note: "เรียงลำดับการตรวจสอบเงื่อนไขให้ระบบแยกแยะสถานะได้ถูกต้อง ไม่ว่าค่าระดับน้ำจะเป็นเท่าใดก็ตาม",
+      blocks: [
+        { id:"c1", label:"ถ้า ระดับน้ำ ≥ 220 → ส่งสัญญาณ “วิกฤต”", kind:"logic" },
+        { id:"c2", label:"มิฉะนั้น ถ้า ระดับน้ำ ≥ 150 → ส่งสัญญาณ “เฝ้าระวัง”", kind:"logic" },
+        { id:"c3", label:"มิฉะนั้น → ส่งสัญญาณ “ปกติ”", kind:"logic" }
+      ],
+      correctOrder: ["c1","c2","c3"]
+    }
+  },
+  {
+    id: "l4",
+    title: "ภาระงานที่ 4 · ฝนกับน้ำ: ความสัมพันธ์และเวลาหน่วง (Lag)",
+    teach: "กราฟด้านล่างแสดงปริมาณฝน (เส้นสีส้ม) และระดับน้ำ (เส้นฟ้า) ในรอบ 24 ชั่วโมงเดียวกัน สังเกตว่าระดับน้ำจะขึ้นสูงสุด “ช้ากว่า” ช่วงฝนตกหนักที่สุดเสมอ",
+    chart: { type:"line", labels:[0,2,4,6,8,10,12,14,16,18,20,22,24],
+      datasets:[
+        {label:"ปริมาณฝน (มม./ชม.)", data:[2,5,15,30,35,20,10,5,2,1,0,0,0], color:"#d98b3f"},
+        {label:"ระดับน้ำ (ซม.)", data:[95,96,98,102,108,118,132,150,168,182,190,188,180], color:"#37b7c2"}
+      ] },
+    questions: [
+      { id:"l4q1", text:"ฝนตกหนักที่สุดในช่วงชั่วโมงใด", options:["6–8 ชั่วโมง","0–4 ชั่วโมง","14–16 ชั่วโมง","20–24 ชั่วโมง"], correct:0 },
+      { id:"l4q2", text:"ระดับน้ำขึ้นสูงสุดหลังฝนตกหนักที่สุดไปแล้วประมาณกี่ชั่วโมง (Lag Time)", options:["ทันที (0 ชั่วโมง)","ประมาณ 4 ชั่วโมง","ประมาณ 12 ชั่วโมง","ประมาณ 24 ชั่วโมง"], correct:2 }
+    ]
+  },
+  {
+    id: "l5",
+    title: "ภาระงานที่ 5 · ความถี่การตรวจวัดกับความแม่นยำ",
+    teach: "กราฟแท่งเปรียบเทียบความถี่การตรวจวัด (นาที) กับความแม่นยำในการตรวจจับเหตุการณ์ (%) และอายุแบตเตอรี่ (วัน)",
+    chart: { type:"bar", labels:["5 นาที","10 นาที","15 นาที","30 นาที","60 นาที"],
+      datasets:[
+        {label:"ความแม่นยำ (%)", data:[100,96,92,80,56], color:"#4f92c9"},
+        {label:"อายุแบตเตอรี่ (วัน)", data:[3,6,9,18,36], color:"#d98b3f"}
+      ] },
+    questions: [
+      { id:"l5q1", text:"ยิ่งตรวจวัดถี่ขึ้น (interval สั้นลง) จะส่งผลอย่างไรต่อความแม่นยำและอายุแบตเตอรี่",
+        options:["ความแม่นยำเพิ่มขึ้น และแบตเตอรี่อยู่ได้นานขึ้น","ความแม่นยำเพิ่มขึ้น แต่แบตเตอรี่หมดเร็วขึ้น","ความแม่นยำลดลง และแบตเตอรี่หมดเร็วขึ้น","ไม่มีผลต่อทั้งสองปัจจัย"], correct:1 },
+      { id:"l5q2", text:"หากต้องการความแม่นยำอย่างน้อย 90% และแบตเตอรี่ใช้งานได้อย่างน้อย 7 วัน ควรเลือกความถี่ใด",
+        options:["5 นาที (แบต 3 วัน)","10 นาที (แบต 6 วัน)","15 นาที (แบต 9 วัน)","30 นาที (แบต 18 วัน)"], correct:2 }
+    ]
+  },
+  {
+    id: "l6",
+    title: "ภาระงานที่ 6 · วนซ้ำและเงื่อนไขซ้อน (Loop + Nested Condition)",
+    teach: "ประกอบโปรแกรมควบคุมเซนเซอร์แบบสมบูรณ์ ที่ต้องทำงานซ้ำตลอดเวลาที่แบตเตอรี่ยังไม่หมด โดยตรวจสอบเงื่อนไขซ้อนกัน 3 ระดับในแต่ละรอบ",
+    questions: [
+      { id:"l6q1", text:"เหตุใดบล็อก “ทำซ้ำจนกว่าแบตเตอรี่จะหมด” จึงต้องอยู่ก่อนบล็อกวัดค่าและเงื่อนไขทั้งหมด",
+        options:["เพราะต้องการให้การวัดค่า ตรวจเงื่อนไข และแจ้งเตือน เกิดขึ้นซ้ำ ๆ ตลอดเวลาที่เซนเซอร์ยังทำงานอยู่ ไม่ใช่ทำเพียงครั้งเดียว","เพราะบล็อกวนซ้ำต้องอยู่ท้ายโปรแกรมเสมอ","เพราะช่วยให้โปรแกรมทำงานเร็วขึ้น","ไม่มีผลต่อการทำงานของโปรแกรม"], correct:0 }
+    ],
+    blockExercise: {
+      id: "l6be",
+      startLabel: "เริ่มทำงาน",
+      blocks: [
+        { id:"L2", label:"ทำซ้ำจนกว่าแบตเตอรี่จะหมด", kind:"control" },
+        { id:"L3", label:"วัดระดับน้ำและปริมาณฝน", kind:"sensing" },
+        { id:"L4", label:"ถ้า ระดับน้ำ ≥ เกณฑ์วิกฤต", kind:"logic" },
+        { id:"L5", label:"ส่งสัญญาณเตือน “วิกฤต”", kind:"data" },
+        { id:"L6", label:"มิฉะนั้นถ้า ระดับน้ำ ≥ เกณฑ์เฝ้าระวัง", kind:"logic" },
+        { id:"L7", label:"ส่งสัญญาณเตือน “เฝ้าระวัง”", kind:"data" },
+        { id:"L8", label:"มิฉะนั้น บันทึกค่าปกติ", kind:"data" },
+        { id:"L9", label:"รอ 15 นาที แล้วย้อนกลับไปวัดค่าใหม่", kind:"control" }
+      ],
+      correctOrder: ["L2","L3","L4","L5","L6","L7","L8","L9"]
+    }
+  }
+];
+
+/* ---------------- LEARN ภาระงานที่ 7: ดีบั๊กโปรแกรมบล็อก ---------------- */
+LEARN_TASKS.push({
+  id: "l7",
+  title: "ภาระงานที่ 7 · ดีบั๊กโปรแกรมทุ่นเซนเซอร์ที่ทำงานผิดพลาด",
+  teach: "ทีมพัฒนาส่งมอบโปรแกรมควบคุมทุ่นหุ่นยนต์เซนเซอร์ชุดหนึ่ง แต่เมื่อนำไปทดสอบจริงกลับพบข้อผิดพลาดหลายจุด ภารกิจของคุณคือ “ดีบั๊ก” (แก้จุดบกพร่อง) โปรแกรมนี้ให้ทำงานถูกต้อง โดยลากบล็อกที่ขาดหายจากคลังมาเพิ่ม ลากบล็อกในพื้นที่ทำงานเพื่อสลับลำดับ และลากบล็อกที่ไม่เกี่ยวข้องออกไปทิ้งที่คลัง",
+  debug: {
+    bugs: [
+      "ทดสอบด้วยระดับน้ำ 240 ซม. ระบบแจ้งเป็น “เฝ้าระวัง” แทนที่จะเป็น “วิกฤต” (ลำดับการตรวจเงื่อนไขสลับกัน)",
+      "โปรแกรมทำงานเพียงรอบเดียวแล้วหยุด ไม่วนกลับมาตรวจซ้ำ",
+      "ไม่มีคำสั่งอ่านค่าจากทุ่นเซนเซอร์ ระบบจึงนำค่าเดิมที่ค้างอยู่มาใช้ตลอด",
+      "มีบล็อกที่ไม่เกี่ยวข้องกับภารกิจปะปนอยู่ในโปรแกรม (บล็อกลวง 2 ชิ้น ควรอยู่ในคลัง ไม่ใช่ในพื้นที่ทำงาน)"
+    ],
+    checks: [
+      { id:"c1", label:"เริ่มด้วยบล็อก “ทำซ้ำตลอดเวลา” เพื่อให้เฝ้าระวังต่อเนื่อง" },
+      { id:"c2", label:"อ่านค่าระดับน้ำจากทุ่นเซนเซอร์ทุกครั้งก่อนตัดสินใจ" },
+      { id:"c3", label:"ตรวจเงื่อนไข “วิกฤต (≥ 220)” ก่อน “เฝ้าระวัง (≥ 150)”" },
+      { id:"c4", label:"บล็อกแจ้งเตือน “วิกฤต” อยู่ถัดจากเงื่อนไขวิกฤตทันที" },
+      { id:"c5", label:"บล็อกแจ้งเตือน “เฝ้าระวัง” อยู่ถัดจากเงื่อนไขเฝ้าระวังทันที" },
+      { id:"c6", label:"ไม่มีบล็อกลวงปะปนอยู่ในพื้นที่ทำงาน" },
+      { id:"c7", label:"ปิดท้ายรอบด้วยบล็อก “รอ 15 นาที”" }
+    ]
+  },
+  blockExercise: {
+    id: "l7be",
+    startLabel: "เมื่อเริ่มการทำงานของทุ่นเซนเซอร์",
+    note: "บล็อกลวง 2 ชิ้นในคลัง (สีเดียวกับบล็อกจริง) ไม่ควรถูกนำมาใช้ — หากเผลอวางไว้ในพื้นที่ทำงาน ให้ลากกลับไปที่คลัง",
+    blocks: [
+      { id:"d_loop",    label:"ทำซ้ำตลอดเวลา", kind:"control" },
+      { id:"d_read",    label:"อ่านค่าระดับน้ำจากทุ่นเซนเซอร์", kind:"sensing" },
+      { id:"d_ifcrit",  label:"ถ้า ระดับน้ำ ≥ 220 แล้ว", kind:"logic" },
+      { id:"d_crit",    label:"แจ้งเตือน “วิกฤต” ไปยังศูนย์กลาง", kind:"data" },
+      { id:"d_ifwatch", label:"มิฉะนั้นถ้า ระดับน้ำ ≥ 150 แล้ว", kind:"logic" },
+      { id:"d_watch",   label:"แจ้งเตือน “เฝ้าระวัง” ไปยังศูนย์กลาง", kind:"data" },
+      { id:"d_wait",    label:"รอ 15 นาที", kind:"control" },
+      { id:"d_x1",      label:"เปลี่ยนสีไฟของทุ่นเป็นสีรุ้ง", kind:"data" },
+      { id:"d_x2",      label:"รอจนกว่าผู้ใช้จะกดปุ่มบนแป้นพิมพ์", kind:"control" }
+    ],
+    // โปรแกรมตั้งต้นที่ "มีบั๊ก" (สลับลำดับเงื่อนไข ไม่มีวนซ้ำ ไม่มีการอ่านค่า และมีบล็อกลวงปน)
+    initialProgram: ["d_ifwatch","d_watch","d_ifcrit","d_crit","d_x1","d_wait"],
+    requiredIds: ["d_loop","d_read","d_ifcrit","d_crit","d_ifwatch","d_watch","d_wait"],
+    decoyIds: ["d_x1","d_x2"],
+    correctOrder: ["d_loop","d_read","d_ifcrit","d_crit","d_ifwatch","d_watch","d_wait"]
+  },
+  questions: [
+    { id:"l7q1", text:"หลังจากดีบั๊กแล้ว เหตุใดการตรวจเงื่อนไข “วิกฤต (≥ 220)” จึงต้องมาก่อน “เฝ้าระวัง (≥ 150)” เสมอ",
+      options:[
+        "ไม่มีผลใด ๆ เพราะระบบจะตรวจทุกเงื่อนไขพร้อมกันอยู่แล้ว",
+        "เพราะค่าที่ ≥ 220 ก็เข้าเงื่อนไข ≥ 150 ด้วย ถ้าตรวจเฝ้าระวังก่อน ค่าวิกฤตจะถูกจัดเป็นเฝ้าระวังและไม่มีวันถูกแจ้งเป็นวิกฤตเลย",
+        "เพราะบล็อกเงื่อนไขต้องเรียงจากตัวเลขน้อยไปมากเสมอ",
+        "เพราะจะทำให้โปรแกรมทำงานเร็วขึ้น"
+      ], correct:1 }
+  ]
+});
+
+/* ---------------- APPLY (5 กิจกรรม) ---------------- */
+const APPLY_ACTIVITIES = [
+  {
+    id: "a1", type: "threshold",
+    title: "กิจกรรมที่ 1 · ปรับเกณฑ์ระดับน้ำเตือนภัย",
+    instructions: "ปรับเส้นเกณฑ์ “เฝ้าระวัง” และ “วิกฤต” บนกราฟข้อมูลย้อนหลัง ให้ระบบจำแนกสถานะของทุกจุดข้อมูลได้ตรงกับความเป็นจริงมากที่สุด",
+    points: [80,120,145,155,165,180,195,225,240,260,280,300],
+    pointLabels: ["S1","S2","S3","S4","S5","S6","S7","S8","S9","S10","S11","S12"],
+    trueThresholds: { watch:150, critical:220 },
+    slider: { watchMin:80, watchMax:220, watchDefault:100, criticalMin:150, criticalMax:320, criticalDefault:260, step:1 }
+  },
+  {
+    id: "a2", type: "weights",
+    title: "กิจกรรมที่ 2 · ปรับน้ำหนักปัจจัยเสี่ยง",
+    instructions: "ปรับน้ำหนักของ 3 ปัจจัย (ระดับน้ำ, ปริมาณฝนสะสม 24 ชม., อัตราการเพิ่มขึ้นของระดับน้ำ) ในสูตรคะแนนความเสี่ยงรวม ให้จำแนกทั้ง 8 กรณีตัวอย่างเป็น ปกติ / เฝ้าระวัง / วิกฤต ได้ถูกต้องทั้งหมด (เกณฑ์ตัดสิน: < 40 ปกติ, 40–69 เฝ้าระวัง, ≥ 70 วิกฤต)",
+    cases: [
+      { level:10, rain:10, rise:10, label:0 },
+      { level:30, rain:20, rise:15, label:0 },
+      { level:50, rain:40, rise:30, label:1 },
+      { level:60, rain:50, rise:20, label:1 },
+      { level:45, rain:60, rise:80, label:1 },
+      { level:80, rain:70, rise:60, label:2 },
+      { level:95, rain:80, rise:70, label:2 },
+      { level:20, rain:90, rise:95, label:1 }
+    ],
+    weightDefault: { level:20, rain:40, rise:40 }
+  },
+  {
+    id: "a3", type: "frequency",
+    title: "กิจกรรมที่ 3 · ปรับความถี่การตรวจวัด",
+    instructions: "ปรับความถี่การตรวจวัด (นาที) ให้ระบบมีความแม่นยำในการตรวจจับอย่างน้อย 90% และแบตเตอรี่ใช้งานได้อย่างน้อย 7 วัน ในเวลาเดียวกัน",
+    sliderMin:5, sliderMax:60, sliderDefault:45,
+    accuracyFn: "100 - (I-5)*0.8", batteryFn: "0.6 * I",
+    target: { accuracy:90, battery:7 }
+  },
+  {
+    id: "a4", type: "blockprogram",
+    title: "กิจกรรมที่ 4 · ประกอบโปรแกรมเซนเซอร์และทดสอบ",
+    instructions: "ประกอบโปรแกรมควบคุมเซนเซอร์ให้ครบวงจร แล้วกด “รันทดสอบ” เพื่อดูว่าโปรแกรมของคุณให้ผลการแจ้งเตือนถูกต้องกับสถานการณ์ทดสอบทั้ง 5 กรณีหรือไม่ ปรับลำดับบล็อกจนกว่าจะผ่านครบทุกกรณี",
+    blockExercise: {
+      id: "a4be",
+      startLabel: "เริ่มทำงาน",
+      blocks: [
+        { id:"p_loop", label:"ทำซ้ำจนกว่าแบตเตอรี่จะหมด", kind:"control" },
+        { id:"p_measure", label:"วัดระดับน้ำ", kind:"sensing" },
+        { id:"p_ifcrit", label:"ถ้า ระดับน้ำ ≥ 220 →", kind:"logic" },
+        { id:"p_crit", label:"ส่งสัญญาณ “วิกฤต”", kind:"data" },
+        { id:"p_ifwatch", label:"มิฉะนั้นถ้า ระดับน้ำ ≥ 150 →", kind:"logic" },
+        { id:"p_watch", label:"ส่งสัญญาณ “เฝ้าระวัง”", kind:"data" },
+        { id:"p_normal", label:"มิฉะนั้น บันทึกค่าปกติ", kind:"data" },
+        { id:"p_wait", label:"รอ 15 นาที", kind:"control" }
+      ],
+      correctOrder: ["p_loop","p_measure","p_ifcrit","p_crit","p_ifwatch","p_watch","p_normal","p_wait"]
+    },
+    testScenarios: [
+      { label:"สถานการณ์ 1: ระดับน้ำ 90 ซม.", level:90, expected:"ปกติ" },
+      { label:"สถานการณ์ 2: ระดับน้ำ 165 ซม.", level:165, expected:"เฝ้าระวัง" },
+      { label:"สถานการณ์ 3: ระดับน้ำ 240 ซม.", level:240, expected:"วิกฤต" },
+      { label:"สถานการณ์ 4: ระดับน้ำ 149 ซม.", level:149, expected:"ปกติ" },
+      { label:"สถานการณ์ 5: ระดับน้ำ 220 ซม.", level:220, expected:"วิกฤต" }
+    ]
+  },
+  {
+    id: "a5", type: "blend",
+    title: "กิจกรรมที่ 5 · ปรับสัดส่วนข้อมูลสถานีต้นน้ำ-กลางน้ำ",
+    instructions: "สถานีต้นน้ำแจ้งเตือนได้เร็วแต่มีสัญญาณรบกวนสูง ส่วนสถานีกลางน้ำแม่นยำกว่าแต่แจ้งเตือนได้ช้ากว่า ปรับสัดส่วนการผสมข้อมูลจาก 2 สถานี ให้ได้ทั้งเวลานำหน้า (Lead Time) อย่างน้อย 45 นาที และความแม่นยำอย่างน้อย 92%",
+    sliderMin:0, sliderMax:100, sliderDefault:15,
+    leadFn:"20 + 0.5*r", accuracyFn:"100 - 0.1*r",
+    target: { lead:45, accuracy:92 }
+  }
+];
+
+/* ---------------- REFLECT (4 Likert + 2 ปลายเปิด) ---------------- */
+const REFLECT_ITEMS = [
+  { id:"r1", type:"likert", text:"ฉันสามารถอธิบายหลักการทำงานของระบบเซนเซอร์เตือนภัยน้ำท่วมได้อย่างเข้าใจ" },
+  { id:"r2", type:"likert", text:"การเรียงบล็อกคำสั่งช่วยให้ฉันเข้าใจตรรกะ (Logic) ของระบบดิจิทัลมากขึ้น" },
+  { id:"r3", type:"likert", text:"ฉันมั่นใจว่าสามารถปรับพารามิเตอร์ (เช่น เกณฑ์ น้ำหนัก ความถี่) ให้เหมาะกับสถานการณ์ที่ซับซ้อนได้" },
+  { id:"r4", type:"likert", text:"กิจกรรมนี้ทำให้ฉันสนใจงานด้านเทคโนโลยี/วิศวกรรมมากขึ้น" },
+  { id:"r5", type:"open", text:"หากระบบเตือนภัยแจ้งเตือนผิดพลาดบ่อยครั้ง (False Alarm) จะเกิดผลกระทบต่อชุมชนอย่างไร และควรออกแบบระบบอย่างไรเพื่อลดปัญหานี้",
+    keywords:["ชุมชน","อพยพ","เชื่อมั่น","ไม่เชื่อ","ตื่นตระหนก","ทรัพยากร","ปรับเกณฑ์","ตรวจสอบซ้ำ","หลายเซนเซอร์","ผสมผสาน","ยืนยัน","ความเสียหาย"] },
+  { id:"r6", type:"open", text:"ยกตัวอย่างสถานการณ์อื่นในชีวิตจริง (นอกจากน้ำท่วม) ที่สามารถใช้การจำลองสถานการณ์และตัวแทนดิจิทัลมาช่วยแก้ปัญหาได้ พร้อมอธิบายเหตุผลสั้น ๆ",
+    keywords:["ไฟป่า","จราจร","โรคระบาด","แผ่นดินไหว","มลพิษ","อากาศ","หุ่นยนต์","โรงงาน","พลังงาน","เกษตร","อวกาศ","ภัยพิบัติ","น้ำประปา"] }
+];
+
+/* =======================================================================
+   SmartFlood Sentinel — PISA 2025 LDW practice test — application engine
+   ======================================================================= */
+
+const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby-EQrWXlKE8-zo7JK1DAwytJ5F5Jb8NtbHfo1OmoNwnzVnsWYiFOhtNKM0x_xGEmCg/exec";
+const SHEET_NAME = "Sheet15";
+const TEST_MINUTES = 30;
+
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const LETTERS = ["A","B","C","D","E"];
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+/* ---------------- global state ---------------- */
+const state = {
+  student: { name:"", grade:"" },
+  stage: "login",
+  startedAt: null,
+  show: { idx:0, answers:{} },
+  learn: { idx:0, answers:{} },
+  apply: { idx:0, results:{} },
+  reflect: { answers:{} },
+  blocks: {}, // exerciseId -> {palette:[], program:[]}
+  debug: {},  // taskId -> percent complete after running the debug test
+  a1: null, a2: null, a3: null, a5: null,
+  report: null
+};
+
+/* ---------------- dependency-free SVG chart renderer (no CDN, works offline) ---------------- */
+const PALETTE_FALLBACK = ["#37b7c2","#e0a63c","#e0604f","#5fae64","#b385d6","#4f92c9"];
+
+function niceCeil(v){
+  if(v<=0) return 10;
+  const mag = Math.pow(10, Math.floor(Math.log10(v)));
+  const norm = v/mag;
+  let nice;
+  if(norm<=1) nice=1; else if(norm<=2) nice=2; else if(norm<=5) nice=5; else nice=10;
+  return nice*mag;
+}
+function svgEsc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+
+function renderLineChart(containerId, cfg){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const { labels, datasets } = cfg;
+  const W=680, H=240, padL=44, padR=14, padT=14, padB=26;
+  const innerW=W-padL-padR, innerH=H-padT-padB;
+  const allVals = datasets.flatMap(d=>d.data);
+  let min = Math.min(...allVals), max = Math.max(...allVals);
+  if(max===min) max = min+10;
+  const pad = (max-min)*0.15;
+  const yMax = max+pad;
+  const yMin = min>=0 ? 0 : min-pad;
+  const xAt = i => labels.length>1 ? padL + i*(innerW/(labels.length-1)) : padL+innerW/2;
+  const yAt = v => padT + (yMax-v)/((yMax-yMin)||1)*innerH;
+
+  let gridSVG="", yLabelSVG="";
+  const ticks=4;
+  for(let t=0;t<=ticks;t++){
+    const val = yMin+(yMax-yMin)*t/ticks;
+    const y = yAt(val);
+    gridSVG += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="#1c343c" stroke-width="1"/>`;
+    yLabelSVG += `<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#a9c2c2">${Math.round(val)}</text>`;
+  }
+  const step = Math.max(1, Math.ceil(labels.length/13));
+  let xLabelSVG="";
+  labels.forEach((lb,i)=>{
+    if(i%step!==0 && i!==labels.length-1) return;
+    xLabelSVG += `<text x="${xAt(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#a9c2c2">${svgEsc(lb)}</text>`;
+  });
+
+  let seriesSVG="";
+  datasets.forEach((d,di)=>{
+    const color = d.color || PALETTE_FALLBACK[di%PALETTE_FALLBACK.length];
+    const pts = d.data.map((v,i)=>`${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`).join(" ");
+    const dashAttr = d.dash ? 'stroke-dasharray="6,5"' : "";
+    seriesSVG += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${d.dash?2:2.5}" ${dashAttr}/>`;
+    if(!d.dash){
+      d.data.forEach((v,i)=>{ seriesSVG += `<circle cx="${xAt(i).toFixed(1)}" cy="${yAt(v).toFixed(1)}" r="3.2" fill="${color}"/>`; });
+    }
+  });
+
+  const legendHTML = datasets.map((d,di)=>{
+    const color = d.color || PALETTE_FALLBACK[di%PALETTE_FALLBACK.length];
+    return `<span style="display:inline-flex;align-items:center;gap:6px;margin:2px 16px 2px 0;font-size:12.5px;color:var(--ink-dim)">
+      <span style="width:12px;height:${d.dash?'2px':'12px'};border-radius:${d.dash?'0':'3px'};background:${color};display:inline-block"></span>${svgEsc(d.label)}
+    </span>`;
+  }).join("");
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg" role="img">
+      ${gridSVG}${yLabelSVG}${xLabelSVG}${seriesSVG}
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#2c4650" stroke-width="1"/>
+      <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#2c4650" stroke-width="1"/>
+    </svg>
+    <div style="margin-top:8px">${legendHTML}</div>`;
+}
+
+function renderBarChart(containerId, cfg){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  const { labels, datasets } = cfg;
+  const W=680, H=240, padL=44, padR=14, padT=14, padB=26;
+  const innerW=W-padL-padR, innerH=H-padT-padB;
+  const allVals = datasets.flatMap(d=>d.data);
+  const yMax = niceCeil(Math.max(...allVals,1)*1.15);
+  const yMin=0;
+  const yAt = v => padT + (yMax-v)/(yMax-yMin)*innerH;
+
+  let gridSVG="", yLabelSVG="";
+  const ticks=4;
+  for(let t=0;t<=ticks;t++){
+    const val = yMin+(yMax-yMin)*t/ticks;
+    const y = yAt(val);
+    gridSVG += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W-padR}" y2="${y.toFixed(1)}" stroke="#1c343c" stroke-width="1"/>`;
+    yLabelSVG += `<text x="${padL-8}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="11" fill="#a9c2c2">${Math.round(val)}</text>`;
+  }
+
+  const n = labels.length;
+  const groupW = innerW/n;
+  const numSeries = datasets.length;
+  const barGap = 4;
+  const barW = Math.max(6, (groupW*0.7 - barGap*(numSeries-1)) / numSeries);
+
+  let barsSVG="", xLabelSVG="";
+  labels.forEach((lb,i)=>{
+    const groupX = padL + i*groupW + groupW*0.15;
+    xLabelSVG += `<text x="${(padL+i*groupW+groupW/2).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="11" fill="#a9c2c2">${svgEsc(lb)}</text>`;
+    datasets.forEach((d,di)=>{
+      const v = d.data[i];
+      const color = Array.isArray(d.colors) ? d.colors[i] : (d.color || PALETTE_FALLBACK[di%PALETTE_FALLBACK.length]);
+      const x = groupX + di*(barW+barGap);
+      const y = yAt(v);
+      const h = (H-padB)-y;
+      barsSVG += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(0,h).toFixed(1)}" fill="${color}" rx="2"/>`;
+    });
+  });
+
+  const legendHTML = datasets.map((d,di)=>{
+    const color = Array.isArray(d.colors) ? (d.colors[0]||PALETTE_FALLBACK[0]) : (d.color || PALETTE_FALLBACK[di%PALETTE_FALLBACK.length]);
+    return `<span style="display:inline-flex;align-items:center;gap:6px;margin:2px 16px 2px 0;font-size:12.5px;color:var(--ink-dim)">
+      <span style="width:12px;height:12px;border-radius:3px;background:${color};display:inline-block"></span>${svgEsc(d.label)}
+    </span>`;
+  }).join("");
+
+  el.innerHTML = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block" xmlns="http://www.w3.org/2000/svg" role="img">
+      ${gridSVG}${yLabelSVG}${xLabelSVG}${barsSVG}
+      <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${H-padB}" stroke="#2c4650" stroke-width="1"/>
+      <line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="#2c4650" stroke-width="1"/>
+    </svg>
+    <div style="margin-top:8px">${legendHTML}</div>`;
+}
+
+/* ---------------- glossary + help ---------------- */
+function initGlossary(){
+  const list = $("#glossList");
+  list.innerHTML = GLOSSARY.map(([t,d])=>`<div class="gloss-item"><div class="gloss-term">${t}</div><div class="gloss-def">${d}</div></div>`).join("");
+  $("#fabHelp").onclick = ()=> $("#glossModal").classList.remove("hidden");
+  $("#glossClose").onclick = ()=> $("#glossModal").classList.add("hidden");
+  $("#glossModal").addEventListener("click", e=>{ if(e.target.id==="glossModal") e.currentTarget.classList.add("hidden"); });
+}
+function hintHTML(id, text){
+  if(!text) return "";
+  return `<button class="hint-toggle" data-hint="${id}">💡 ต้องการคำใบ้</button><div class="hint-box hidden" id="hintbox-${id}">${text}</div>`;
+}
+function wireHints(root){
+  $$(".hint-toggle", root).forEach(btn=>{
+    btn.onclick = ()=>{
+      const box = $(`#hintbox-${btn.dataset.hint}`, root);
+      box.classList.toggle("hidden");
+      btn.textContent = box.classList.contains("hidden") ? "💡 ต้องการคำใบ้" : "🙈 ซ่อนคำใบ้";
+    };
+  });
+}
+
+/* ---------------- header / gauge ---------------- */
+function updateHeader(){
+  const badge = $("#studentBadge");
+  if(state.student.name){
+    badge.classList.remove("hidden");
+    let timerText = "";
+    if(state.startedAt){
+      const elapsed = Math.floor((Date.now()-state.startedAt)/1000);
+      const remain = Math.max(0, TEST_MINUTES*60 - elapsed);
+      const m = String(Math.floor(remain/60)).padStart(2,"0");
+      const s = String(remain%60).padStart(2,"0");
+      timerText = ` · ⏱ ${m}:${s}`;
+    }
+    badge.innerHTML = `<span>👤 <b>${state.student.name}</b></span><span>🎓 ${state.student.grade}</span><span>${timerText}</span>`;
+  }
+}
+setInterval(()=>{ if(state.startedAt) updateHeader(); }, 1000);
+
+const STAGE_ORDER = ["show","learn","apply","reflect","report"];
+function updateGauge(){
+  const gauge = $("#gauge");
+  if(state.stage==="login"){ gauge.classList.add("hidden"); return; }
+  gauge.classList.remove("hidden");
+  const progressByStage = {
+    show: state.show.idx / SHOW_QUESTIONS.length,
+    learn: state.learn.idx / LEARN_TASKS.length,
+    apply: state.apply.idx / APPLY_ACTIVITIES.length,
+    reflect: Object.keys(state.reflect.answers).length / REFLECT_ITEMS.length
+  };
+  const stageIdx = { show:0, learn:1, apply:2, reflect:3, report:4 }[state.stage];
+  ["show","learn","apply","reflect"].forEach((s,i)=>{
+    const seg = $(`.gauge-seg[data-stage="${s}"] .fill`);
+    let pct = 0;
+    if(i < stageIdx) pct = 100;
+    else if(i === stageIdx) pct = Math.round((progressByStage[s]||0)*100);
+    seg.style.width = pct+"%";
+    $(`.gauge-labels span[data-stage="${s}"]`).classList.toggle("active", i===stageIdx);
+  });
+}
+
+function showScreen(name){
+  $$(".screen").forEach(s=>s.classList.add("hidden"));
+  $(`#screen-${name}`).classList.remove("hidden");
+  state.stage = name;
+  updateGauge();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+/* =======================================================================
+   LOGIN
+   ======================================================================= */
+function initLogin(){
+  $("#btnStart").onclick = ()=>{
+    const name = $("#inputName").value.trim();
+    const selectedGrade = $("#gradeSelect").value;
+    if(!name){ alert("กรุณากรอกชื่อผู้เข้าทดสอบ"); return; }
+    if(!selectedGrade){ alert("กรุณาเลือกระดับชั้น"); return; }
+    state.student.name = name;
+    state.student.grade = selectedGrade;
+    state.startedAt = Date.now();
+    updateHeader();
+    $("#fabHelp").classList.remove("hidden");
+    renderShow();
+  };
+}
+
+/* =======================================================================
+   SHOW  (5 MCQ, one at a time)
+   ======================================================================= */
+function renderShow(){
+  showScreen("show");
+  const i = state.show.idx;
+  const q = SHOW_QUESTIONS[i];
+  const root = $("#screen-show");
+  const selected = state.show.answers[q.id];
+
+  let chartHTML = "";
+  if(q.chart){
+    chartHTML = `<div class="chart-box" id="showchart-${q.id}"></div>`;
+  }
+
+  root.innerHTML = `
+    <div class="panel stage-show">
+      <div class="eyebrow"><span class="tag">SHOW · แสดงสิ่งที่รู้</span>ข้อ ${i+1} / ${SHOW_QUESTIONS.length}</div>
+      <div class="q-text">${q.text}</div>
+      ${chartHTML}
+      <div class="opt-list">
+        ${q.options.map((opt,idx)=>`
+          <button class="opt ${selected===idx?'selected':''}" data-idx="${idx}">
+            <span class="letter">${LETTERS[idx]}</span><span>${opt}</span>
+          </button>`).join("")}
+      </div>
+      <div class="btn-row">
+        <button class="btn secondary" id="btnBack" ${i===0?'disabled':''}>ย้อนกลับ</button>
+        <button class="btn" id="btnNext" ${selected===undefined?'disabled':''}>${i===SHOW_QUESTIONS.length-1?'ไปขั้นตอน Learn':'ข้อถัดไป'}</button>
+      </div>
+    </div>`;
+
+  if(q.chart){
+    renderLineChart(`showchart-${q.id}`, { labels:q.chart.labels, datasets:[{label:q.chart.label, data:q.chart.data, color:"#37b7c2"}] });
+  }
+
+  $$(".opt", root).forEach(btn=>{
+    btn.onclick = ()=>{
+      state.show.answers[q.id] = Number(btn.dataset.idx);
+      renderShow();
+    };
+  });
+  $("#btnBack", root).onclick = ()=>{ if(i>0){ state.show.idx--; renderShow(); } };
+  $("#btnNext", root).onclick = ()=>{
+    if(i < SHOW_QUESTIONS.length-1){ state.show.idx++; renderShow(); }
+    else { renderLearn(); }
+  };
+}
+
+/* =======================================================================
+   LEARN  (6 tasks, sequential)
+   ======================================================================= */
+function ensureBlockState(exercise){
+  if(!state.blocks[exercise.id]){
+    const all = exercise.blocks.map(b=>b.id);
+    // A debug exercise starts with a pre-built (buggy) program in the workspace.
+    const initial = (exercise.initialProgram || []).filter(id => all.includes(id));
+    const rest = all.filter(id => !initial.includes(id));
+    state.blocks[exercise.id] = {
+      palette: exercise.initialProgram ? rest : shuffle(rest),
+      program: initial.slice()
+    };
+  }
+  return state.blocks[exercise.id];
+}
+
+// shared drag payload between the palette list and the workspace list
+let dragInfo = null;
+
+function computeDropIndex(listEl, clientY){
+  const chips = Array.from(listEl.querySelectorAll(".block-chip"));
+  for(let i=0;i<chips.length;i++){
+    const r = chips[i].getBoundingClientRect();
+    if(clientY < r.top + r.height/2) return i;
+  }
+  return chips.length;
+}
+function clearDropMarker(listEl){
+  const m = listEl.querySelector(".drop-marker");
+  if(m) m.remove();
+}
+function showDropMarker(listEl, index){
+  clearDropMarker(listEl);
+  const marker = document.createElement("div");
+  marker.className = "drop-marker";
+  const chips = Array.from(listEl.querySelectorAll(".block-chip"));
+  if(index >= chips.length) listEl.appendChild(marker);
+  else listEl.insertBefore(marker, chips[index]);
+}
+
+function renderBlockEditor(container, exercise, onChange){
+  const bs = ensureBlockState(exercise);
+  const blockMap = {}; exercise.blocks.forEach(b=>blockMap[b.id]=b);
+
+  const requiredIds = exercise.requiredIds || null;
+  function isComplete(){
+    if(requiredIds) return requiredIds.every(id => bs.program.includes(id));
+    return bs.palette.length === 0;
+  }
+
+  container.innerHTML = `
+    ${exercise.note ? `<div class="hint-box">${exercise.note}</div>` : ""}
+    <p class="dnd-hint">🖱️ ลากบล็อกจากคลังมาวางใน “พื้นที่ทำงาน” หรือลากบล็อกในพื้นที่ทำงานเพื่อสลับลำดับ/นำออก — บนอุปกรณ์สัมผัสใช้ปุ่ม ➕ ▲ ▼ ✕ แทนได้</p>
+    <div class="block-editor">
+      <div class="block-zone" id="palettezone-${exercise.id}">
+        <h4>คลังบล็อกคำสั่ง</h4>
+        <div class="block-list" id="palette-${exercise.id}"></div>
+      </div>
+      <div class="block-zone" id="programzone-${exercise.id}">
+        <h4>พื้นที่ทำงาน (โปรแกรมของคุณ)</h4>
+        <div class="block-chip k-event" style="cursor:default;margin-bottom:8px">🏁 ${exercise.startLabel}</div>
+        <div class="block-list" id="program-${exercise.id}"></div>
+      </div>
+    </div>`;
+
+  const paletteEl = $(`#palette-${exercise.id}`, container);
+  const programEl = $(`#program-${exercise.id}`, container);
+  const paletteZone = $(`#palettezone-${exercise.id}`, container);
+  const programZone = $(`#programzone-${exercise.id}`, container);
+
+  function draw(){
+    paletteEl.innerHTML = "";
+    if(bs.palette.length===0){
+      paletteEl.innerHTML = '<div class="placeholder-row">— ไม่มีบล็อกเหลือในคลัง —</div>';
+    }
+    bs.palette.forEach(id=>{
+      const b = blockMap[id];
+      const chip = document.createElement("div");
+      chip.className = `block-chip k-${b.kind}`;
+      chip.draggable = true;
+      chip.innerHTML = `<span class="grip">⠿</span><span class="lbl">${b.label}</span><button class="mini-btn" title="เพิ่มเข้าพื้นที่ทำงาน">➕</button>`;
+      chip.addEventListener("dragstart", e=>{
+        dragInfo = { from:"palette", id };
+        chip.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        try{ e.dataTransfer.setData("text/plain", id); }catch(_){}
+      });
+      chip.addEventListener("dragend", ()=>{ chip.classList.remove("dragging"); dragInfo=null; clearDropMarker(programEl); programZone.classList.remove("drop-active"); paletteZone.classList.remove("drop-active"); });
+      chip.querySelector("button").onclick = ()=>{
+        bs.palette = bs.palette.filter(x=>x!==id);
+        bs.program.push(id);
+        draw();
+      };
+      paletteEl.appendChild(chip);
+    });
+
+    programEl.innerHTML = "";
+    if(bs.program.length===0){
+      programEl.innerHTML = '<div class="placeholder-row">— ยังไม่มีบล็อกในพื้นที่ทำงาน ลากบล็อกจากคลังมาวางที่นี่ —</div>';
+    }
+    bs.program.forEach((id,i)=>{
+      const b = blockMap[id];
+      const chip = document.createElement("div");
+      chip.className = `block-chip k-${b.kind} in-program`;
+      chip.draggable = true;
+      chip.innerHTML = `<span class="idx">${i+1}</span><span class="grip">⠿</span><span class="lbl">${b.label}</span>
+        <button class="mini-btn" data-act="up" title="เลื่อนขึ้น">▲</button>
+        <button class="mini-btn" data-act="down" title="เลื่อนลง">▼</button>
+        <button class="mini-btn" data-act="rm" title="นำออก">✕</button>`;
+      chip.addEventListener("dragstart", e=>{
+        dragInfo = { from:"program", id, index:i };
+        chip.classList.add("dragging");
+        e.dataTransfer.effectAllowed = "move";
+        try{ e.dataTransfer.setData("text/plain", id); }catch(_){}
+      });
+      chip.addEventListener("dragend", ()=>{ chip.classList.remove("dragging"); dragInfo=null; clearDropMarker(programEl); programZone.classList.remove("drop-active"); paletteZone.classList.remove("drop-active"); });
+      chip.querySelector('[data-act="up"]').onclick = ()=>{
+        if(i>0){ [bs.program[i-1],bs.program[i]]=[bs.program[i],bs.program[i-1]]; draw(); }
+      };
+      chip.querySelector('[data-act="down"]').onclick = ()=>{
+        if(i<bs.program.length-1){ [bs.program[i+1],bs.program[i]]=[bs.program[i],bs.program[i+1]]; draw(); }
+      };
+      chip.querySelector('[data-act="rm"]').onclick = ()=>{
+        bs.program.splice(i,1); bs.palette.push(id); draw();
+      };
+      programEl.appendChild(chip);
+    });
+
+    if(onChange) onChange(bs.program.slice(), isComplete());
+  }
+
+  // --- drop target: workspace (insert / reorder) ---
+  programZone.addEventListener("dragover", e=>{
+    if(!dragInfo) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    programZone.classList.add("drop-active");
+    showDropMarker(programEl, computeDropIndex(programEl, e.clientY));
+  });
+  programZone.addEventListener("dragleave", e=>{
+    if(!programZone.contains(e.relatedTarget)){ programZone.classList.remove("drop-active"); clearDropMarker(programEl); }
+  });
+  programZone.addEventListener("drop", e=>{
+    if(!dragInfo) return;
+    e.preventDefault();
+    let target = computeDropIndex(programEl, e.clientY);
+    clearDropMarker(programEl);
+    programZone.classList.remove("drop-active");
+    if(dragInfo.from === "palette"){
+      bs.palette = bs.palette.filter(x=>x!==dragInfo.id);
+      bs.program.splice(target, 0, dragInfo.id);
+    } else {
+      const from = dragInfo.index;
+      if(target > from) target--;          // account for the gap left by the moved block
+      bs.program.splice(from, 1);
+      bs.program.splice(target, 0, dragInfo.id);
+    }
+    dragInfo = null;
+    draw();
+  });
+
+  // --- drop target: palette (remove a block from the workspace) ---
+  paletteZone.addEventListener("dragover", e=>{
+    if(!dragInfo || dragInfo.from !== "program") return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    paletteZone.classList.add("drop-active");
+  });
+  paletteZone.addEventListener("dragleave", e=>{
+    if(!paletteZone.contains(e.relatedTarget)) paletteZone.classList.remove("drop-active");
+  });
+  paletteZone.addEventListener("drop", e=>{
+    if(!dragInfo || dragInfo.from !== "program") return;
+    e.preventDefault();
+    paletteZone.classList.remove("drop-active");
+    bs.program.splice(dragInfo.index, 1);
+    bs.palette.push(dragInfo.id);
+    dragInfo = null;
+    draw();
+  });
+
+  draw();
+  return { getProgram:()=>bs.program.slice(), isComplete };
+}
+
+/* Evaluate the debug task. Each check maps to one concrete structural property of the
+   repaired program, so the student gets actionable feedback instead of a bare score.
+   All seven checks pass exactly when the program equals the intended correct order. */
+function evaluateDebugChecks(program, ex, checks){
+  const at = id => program.indexOf(id);
+  const iCrit = at("d_ifcrit"), iWatch = at("d_ifwatch");
+  const rules = {
+    c1: () => program[0] === "d_loop",
+    c2: () => program[1] === "d_read",
+    c3: () => iCrit !== -1 && iWatch !== -1 && iCrit < iWatch,
+    c4: () => iCrit !== -1 && program[iCrit + 1] === "d_crit",
+    c5: () => iWatch !== -1 && program[iWatch + 1] === "d_watch",
+    c6: () => !(ex.decoyIds || []).some(id => program.includes(id)),
+    c7: () => program[program.length - 1] === "d_wait",
+  };
+  return checks.map(c => ({
+    label: c.label,
+    ok: rules[c.id] ? !!rules[c.id]() : false,
+  }));
+}
+
+function blockOrderFraction(program, correctOrder){
+  if(!program || program.length !== correctOrder.length) {
+    // partial credit even if not all blocks placed yet
+    let matches=0;
+    for(let i=0;i<(program?program.length:0);i++){ if(program[i]===correctOrder[i]) matches++; }
+    return matches/correctOrder.length;
+  }
+  let matches=0;
+  for(let i=0;i<correctOrder.length;i++){ if(program[i]===correctOrder[i]) matches++; }
+  return matches/correctOrder.length;
+}
+
+function renderLearn(){
+  showScreen("learn");
+  const i = state.learn.idx;
+  const task = LEARN_TASKS[i];
+  const root = $("#screen-learn");
+
+  let chartHTML = "";
+  if(task.chart){ chartHTML = `<div class="chart-box" id="learnchart-${task.id}"></div>`; }
+
+  let questionsHTML = (task.questions||[]).map(q=>{
+    const selected = state.learn.answers[q.id];
+    return `
+      <div class="q-block" data-qid="${q.id}" style="margin-top:16px">
+        <div class="q-text">${q.text}</div>
+        <div class="opt-list">
+          ${q.options.map((opt,idx)=>`
+            <button class="opt ${selected===idx?'selected':''}" data-qid="${q.id}" data-idx="${idx}">
+              <span class="letter">${LETTERS[idx]}</span><span>${opt}</span>
+            </button>`).join("")}
+        </div>
+      </div>`;
+  }).join("");
+
+  root.innerHTML = `
+    <div class="panel stage-learn">
+      <div class="eyebrow"><span class="tag">LEARN · เรียนรู้</span>${task.title} (${i+1} / ${LEARN_TASKS.length})</div>
+      <p>${task.teach||""}</p>
+      ${chartHTML}
+      ${task.debug ? `
+        <div class="bug-list">
+          <h4>🐞 รายการข้อผิดพลาดที่ตรวจพบ (ต้องแก้ไขให้ครบ)</h4>
+          <ul>${task.debug.bugs.map(b=>`<li>${b}</li>`).join("")}</ul>
+        </div>` : ""}
+      ${task.blockExercise ? `<div id="blockhost"></div>` : ""}
+      ${task.debug ? `
+        <div class="btn-row" style="justify-content:flex-start;margin-top:12px">
+          <button class="btn secondary" id="dbgRun">▶ ดำเนินการทดสอบโปรแกรมที่แก้ไขแล้ว</button>
+        </div>
+        <div id="dbgResults" style="margin-top:12px"></div>` : ""}
+      ${questionsHTML}
+      <div class="btn-row">
+        <button class="btn secondary" id="btnBack" ${i===0?'disabled':''}>ย้อนกลับ</button>
+        <button class="btn" id="btnNext">${i===LEARN_TASKS.length-1?'ไปขั้นตอน Apply':'ภาระงานถัดไป'}</button>
+      </div>
+    </div>`;
+
+  if(task.chart){
+    if(task.chart.type==="bar") renderBarChart(`learnchart-${task.id}`, { labels:task.chart.labels, datasets:task.chart.datasets });
+    else renderLineChart(`learnchart-${task.id}`, { labels:task.chart.labels, datasets:task.chart.datasets });
+  }
+
+  let blockCtl = null;
+  function refreshNextState(){
+    const allAnswered = (task.questions||[]).every(q=>state.learn.answers[q.id]!==undefined);
+    const blockOk = task.blockExercise ? (blockCtl && blockCtl.isComplete()) : true;
+    // A debug task counts as done only when the CURRENT program is the one that was tested.
+    const rec = state.debug[task.id];
+    const debugOk = task.debug
+      ? !!(rec && blockCtl && rec.sig === blockCtl.getProgram().join(","))
+      : true;
+    $("#btnNext", root).disabled = !(allAnswered && blockOk && debugOk);
+  }
+
+  if(task.blockExercise){
+    blockCtl = renderBlockEditor($("#blockhost", root), task.blockExercise, (program)=>{
+      if(task.debug){
+        // if the program was edited after a test run, retire the stale result
+        const rec = state.debug[task.id];
+        if(rec && rec.sig !== program.join(",")){
+          delete state.debug[task.id];
+          const box = $("#dbgResults", root);
+          if(box) box.innerHTML = "";
+        }
+      }
+      refreshNextState();
+    });
+  }
+
+  if(task.debug){
+    $("#dbgRun", root).onclick = ()=>{
+      const ex = task.blockExercise;
+      const program = blockCtl.getProgram();
+      const box = $("#dbgResults", root);
+      if(!blockCtl.isComplete()){
+        box.innerHTML = `<p class="hint-box">ยังวางบล็อกที่จำเป็นไม่ครบ — ต้องมีบล็อกที่ใช้งานจริงครบทั้ง ${ex.requiredIds.length} ชิ้นในพื้นที่ทำงานก่อนจึงจะทดสอบได้</p>`;
+        return;
+      }
+      const results = evaluateDebugChecks(program, ex, task.debug.checks);
+      const passed = results.filter(r=>r.ok).length;
+      const pct = Math.round(passed / results.length * 100);
+      state.debug[task.id] = { pct, sig: program.join(",") };
+
+      box.innerHTML = `
+        <div class="metric ${pct===100?'pass':(pct<60?'fail':'')}" style="display:inline-block">
+          <div class="label">ผลการดีบั๊ก (ผ่าน ${passed} จาก ${results.length} ข้อตรวจสอบ)</div>
+          <div class="value">${pct}%</div>
+        </div>
+        ${pct===100 ? `<p class="hint-box" style="border-color:#4fae7a;color:#cfe9d9">🎉 ยอดเยี่ยม! โปรแกรมทำงานถูกต้องครบทุกข้อตรวจสอบแล้ว</p>` : ""}
+        <table class="hist" style="margin-top:10px">
+          <thead><tr><th>ข้อตรวจสอบ</th><th style="width:70px">ผล</th></tr></thead>
+          <tbody>${results.map(r=>`<tr><td>${r.label}</td><td style="color:${r.ok?'#4fae7a':'#e0604f'}">${r.ok?'✅ ผ่าน':'❌ ยังไม่ผ่าน'}</td></tr>`).join("")}</tbody>
+        </table>`;
+      refreshNextState();
+    };
+  }
+
+  $$(".opt", root).forEach(btn=>{
+    btn.onclick = ()=>{
+      state.learn.answers[btn.dataset.qid] = Number(btn.dataset.idx);
+      renderLearn();
+    };
+  });
+  refreshNextState();
+
+  $("#btnBack", root).onclick = ()=>{ if(i>0){ state.learn.idx--; renderLearn(); } };
+  $("#btnNext", root).onclick = ()=>{
+    if(i < LEARN_TASKS.length-1){ state.learn.idx++; renderLearn(); }
+    else { renderApply(); }
+  };
+}
+
+/* =======================================================================
+   APPLY  (5 activities)
+   ======================================================================= */
+function renderApply(){
+  showScreen("apply");
+  const i = state.apply.idx;
+  const act = APPLY_ACTIVITIES[i];
+  const root = $("#screen-apply");
+  root.innerHTML = `
+    <div class="panel stage-apply">
+      <div class="eyebrow"><span class="tag">APPLY · ประยุกต์ใช้</span>${act.title} (${i+1} / ${APPLY_ACTIVITIES.length})</div>
+      <p>${act.instructions}</p>
+      <div id="applyBody"></div>
+      <div class="btn-row">
+        <button class="btn secondary" id="btnBack" ${i===0?'disabled':''}>ย้อนกลับ</button>
+        <button class="btn" id="btnNext" ${(act.type==='blockprogram' && !state.apply.results.a4)?'disabled':''}>${i===APPLY_ACTIVITIES.length-1?'ไปขั้นตอน Reflect':'กิจกรรมถัดไป'}</button>
+      </div>
+    </div>`;
+  const body = $("#applyBody", root);
+
+  if(act.type==="threshold") renderApplyThreshold(body, act);
+  if(act.type==="weights") renderApplyWeights(body, act);
+  if(act.type==="frequency") renderApplyFrequency(body, act);
+  if(act.type==="blockprogram") renderApplyBlockProgram(body, act);
+  if(act.type==="blend") renderApplyBlend(body, act);
+
+  $("#btnBack", root).onclick = ()=>{ if(i>0){ state.apply.idx--; renderApply(); } };
+  $("#btnNext", root).onclick = ()=>{
+    if(i < APPLY_ACTIVITIES.length-1){ state.apply.idx++; renderApply(); }
+    else { renderReflect(); }
+  };
+}
+
+/* --- Activity 1: threshold tuning --- */
+function renderApplyThreshold(body, act){
+  if(!state.a1) state.a1 = { watch: act.slider.watchDefault, critical: act.slider.criticalDefault };
+  body.innerHTML = `
+    <div class="slider-row">
+      <label>เกณฑ์ “เฝ้าระวัง” <b id="a1wv">${state.a1.watch}</b> ซม.</label>
+      <input type="range" id="a1w" min="${act.slider.watchMin}" max="${act.slider.watchMax}" step="${act.slider.step}" value="${state.a1.watch}">
+    </div>
+    <div class="slider-row">
+      <label>เกณฑ์ “วิกฤต” <b id="a1cv">${state.a1.critical}</b> ซม.</label>
+      <input type="range" id="a1c" min="${act.slider.criticalMin}" max="${act.slider.criticalMax}" step="${act.slider.step}" value="${state.a1.critical}">
+    </div>
+    <div class="chart-box" id="a1chart"></div>
+    <div class="metric-row">
+      <div class="metric" id="a1metric"><div class="label">ความแม่นยำในการจำแนกสถานะ</div><div class="value">-</div></div>
+    </div>`;
+
+  function classify(v,w,c){ return v<w?0:(v<c?1:2); }
+  const catNames = ["ปกติ","เฝ้าระวัง","วิกฤต"];
+
+  function update(){
+    const w = Number($("#a1w").value), c = Math.max(Number($("#a1c").value), w+1);
+    state.a1 = { watch:w, critical:c };
+    $("#a1wv").textContent = w; $("#a1cv").textContent = c;
+
+    const trueLabels = act.points.map(v=>classify(v, act.trueThresholds.watch, act.trueThresholds.critical));
+    const guessLabels = act.points.map(v=>classify(v,w,c));
+    const correctCount = guessLabels.filter((g,idx)=>g===trueLabels[idx]).length;
+    const acc = Math.round(correctCount/act.points.length*100);
+    const m = $("#a1metric");
+    m.className = "metric " + (acc===100?"pass":(acc<70?"fail":""));
+    m.querySelector(".value").textContent = acc+"%";
+    m.querySelector(".label").textContent = `ความแม่นยำในการจำแนกสถานะ (${correctCount}/${act.points.length} จุดถูกต้อง)`;
+
+    renderLineChart("a1chart", { labels: act.pointLabels, datasets: [
+      { label:"ระดับน้ำ (ซม.)", data:act.points, color:"#37b7c2" },
+      { label:`เกณฑ์เฝ้าระวัง (${w})`, data:act.points.map(()=>w), color:"#e0a63c", dash:true },
+      { label:`เกณฑ์วิกฤต (${c})`, data:act.points.map(()=>c), color:"#e0604f", dash:true }
+    ] });
+
+    state.apply.results.a1 = acc;
+  }
+  $("#a1w").oninput = update; $("#a1c").oninput = update;
+  update();
+}
+
+/* --- Activity 2: weight tuning --- */
+function renderApplyWeights(body, act){
+  if(!state.a2) state.a2 = { ...act.weightDefault };
+  body.innerHTML = `
+    <div class="slider-row"><label>น้ำหนัก “ระดับน้ำปัจจุบัน” <b id="a2lv">${state.a2.level}</b></label>
+      <input type="range" id="a2l" min="0" max="100" step="5" value="${state.a2.level}"></div>
+    <div class="slider-row"><label>น้ำหนัก “ปริมาณฝนสะสม 24 ชม.” <b id="a2rv">${state.a2.rain}</b></label>
+      <input type="range" id="a2r" min="0" max="100" step="5" value="${state.a2.rain}"></div>
+    <div class="slider-row"><label>น้ำหนัก “อัตราการเพิ่มขึ้นของระดับน้ำ” <b id="a2sv">${state.a2.rise}</b></label>
+      <input type="range" id="a2s" min="0" max="100" step="5" value="${state.a2.rise}"></div>
+    <div class="chart-box" id="a2chart"></div>
+    <div class="metric-row">
+      <div class="metric" id="a2metric"><div class="label">ความแม่นยำในการจำแนกความเสี่ยง</div><div class="value">-</div></div>
+    </div>`;
+
+  const catNames = ["ปกติ","เฝ้าระวัง","วิกฤต"];
+  function labelOf(score){ return score<40?0:(score<70?1:2); }
+
+  function update(){
+    const wl=Number($("#a2l").value), wr=Number($("#a2r").value), ws=Number($("#a2s").value);
+    state.a2 = { level:wl, rain:wr, rise:ws };
+    $("#a2lv").textContent=wl; $("#a2rv").textContent=wr; $("#a2sv").textContent=ws;
+    const sum = wl+wr+ws || 1;
+
+    const scores = act.cases.map(c=>(wl*c.level+wr*c.rain+ws*c.rise)/sum);
+    const guesses = scores.map(labelOf);
+    const correctCount = guesses.filter((g,idx)=>g===act.cases[idx].label).length;
+    const acc = Math.round(correctCount/act.cases.length*100);
+
+    const m = $("#a2metric");
+    m.className = "metric " + (acc===100?"pass":(acc<70?"fail":""));
+    m.querySelector(".value").textContent = acc+"%";
+    m.querySelector(".label").textContent = `ความแม่นยำในการจำแนกความเสี่ยง (${correctCount}/${act.cases.length} กรณีถูกต้อง)`;
+
+    renderBarChart("a2chart", {
+      labels: act.cases.map((c,idx)=>`กรณี ${idx+1}`),
+      datasets: [{ label:"คะแนนความเสี่ยงที่คำนวณได้", data:scores.map(s=>Math.round(s*10)/10),
+         colors: scores.map((s,idx)=> guesses[idx]===act.cases[idx].label ? "#4fae7a" : "#e0604f") }]
+    });
+    state.apply.results.a2 = acc;
+  }
+  $("#a2l").oninput=update; $("#a2r").oninput=update; $("#a2s").oninput=update;
+  update();
+}
+
+/* --- Activity 3: sampling frequency --- */
+function renderApplyFrequency(body, act){
+  if(state.a3===null) state.a3 = act.sliderDefault;
+  body.innerHTML = `
+    <div class="slider-row"><label>ความถี่การตรวจวัด <b id="a3v">${state.a3}</b> นาที</label>
+      <input type="range" id="a3s" min="${act.sliderMin}" max="${act.sliderMax}" step="1" value="${state.a3}"></div>
+    <div class="metric-row">
+      <div class="metric" id="a3acc"><div class="label">ความแม่นยำในการตรวจจับ (เป้าหมาย ≥ ${act.target.accuracy}%)</div><div class="value">-</div></div>
+      <div class="metric" id="a3bat"><div class="label">อายุแบตเตอรี่ (เป้าหมาย ≥ ${act.target.battery} วัน)</div><div class="value">-</div></div>
+    </div>`;
+
+  function update(){
+    const I = Number($("#a3s").value);
+    state.a3 = I;
+    $("#a3v").textContent = I;
+    const acc = clamp(100-(I-5)*0.8, 50, 100);
+    const batt = 0.6*I;
+    const accEl = $("#a3acc"), batEl = $("#a3bat");
+    accEl.className = "metric " + (acc>=act.target.accuracy?"pass":"fail");
+    accEl.querySelector(".value").textContent = acc.toFixed(1)+"%";
+    batEl.className = "metric " + (batt>=act.target.battery?"pass":"fail");
+    batEl.querySelector(".value").textContent = batt.toFixed(1)+" วัน";
+
+    let score;
+    if(acc>=act.target.accuracy && batt>=act.target.battery) score = 100;
+    else {
+      const shortAcc = Math.max(0, act.target.accuracy-acc);
+      const shortBat = Math.max(0, act.target.battery-batt);
+      score = clamp(100 - shortAcc*3 - shortBat*5, 0, 100);
+    }
+    state.apply.results.a3 = Math.round(score);
+  }
+  $("#a3s").oninput = update;
+  update();
+}
+
+/* Sensor-buoy → cloud transmission graphic shown after running the Apply block program.
+   pass = every test scenario succeeded; otherwise the signal is shown blocked at the cloud. */
+function simGraphicHTML(pass, passed, total){
+  const beamColor = pass ? "#37b7c2" : "#e0604f";
+  return `
+  <div class="sim-stage">
+    <svg viewBox="0 0 520 190" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-label="${pass ? "ทุ่นเซนเซอร์ส่งข้อมูลถึงศูนย์กลางสำเร็จ" : "สัญญาณจากทุ่นเซนเซอร์ถูกขัดขวาง ไม่ถึงศูนย์กลาง"}">
+      <!-- cloud / ศูนย์ข้อมูลกลาง -->
+      <g>
+        <ellipse cx="410" cy="48" rx="46" ry="24" fill="#9fb9c2" opacity="0.9"/>
+        <ellipse cx="378" cy="56" rx="28" ry="17" fill="#9fb9c2" opacity="0.9"/>
+        <ellipse cx="440" cy="58" rx="30" ry="18" fill="#9fb9c2" opacity="0.9"/>
+        <text x="410" y="54" text-anchor="middle" font-size="12" fill="#0d1b21" font-family="Sarabun, sans-serif">ศูนย์ข้อมูลกลาง</text>
+      </g>
+
+      <!-- signal beam -->
+      <line class="${pass ? "sim-beam" : ""}" x1="140" y1="112" x2="${pass ? 366 : 300}" y2="${pass ? 66 : 80}"
+            stroke="${beamColor}" stroke-width="3.5" stroke-linecap="round"/>
+
+      ${pass ? `
+        <g>
+          <circle cx="410" cy="110" r="17" fill="#4fae7a"/>
+          <path d="M402,110 l6,6 l11,-13" fill="none" stroke="#ffffff" stroke-width="3.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <text x="410" y="146" text-anchor="middle" font-size="12.5" fill="#4fae7a" font-family="Sarabun, sans-serif">ส่งข้อมูลสำเร็จ</text>
+      ` : `
+        <g>
+          <circle cx="322" cy="72" r="19" fill="#2a1013" stroke="#e0604f" stroke-width="2.5"/>
+          <path d="M314,64 l16,16 M330,64 l-16,16" stroke="#e0604f" stroke-width="3.5" stroke-linecap="round"/>
+        </g>
+        <text x="330" y="118" text-anchor="middle" font-size="12.5" fill="#e0604f" font-family="Sarabun, sans-serif">สัญญาณถูกขัดขวาง</text>
+      `}
+
+      <!-- water -->
+      <path d="M0,150 C 80,138 140,162 220,150 C 300,138 360,160 440,148 C 480,142 500,150 520,146 L520,190 L0,190 Z"
+            fill="#12414a"/>
+      <path d="M0,146 C 80,134 140,158 220,146 C 300,134 360,156 440,144 C 480,138 500,146 520,142"
+            fill="none" stroke="#37b7c2" stroke-width="2" opacity="0.5"/>
+
+      <!-- sensor buoy -->
+      <g class="sim-buoy">
+        <line x1="128" y1="118" x2="128" y2="146" stroke="#3aa6a0" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M108,146 h40 l-7,18 h-26 z" fill="#e0a63c"/>
+        <rect x="112" y="122" width="32" height="20" rx="7" fill="#1f6d78" stroke="#37b7c2" stroke-width="1.5"/>
+        <circle cx="128" cy="132" r="4.5" fill="${pass ? "#4fae7a" : "#e0604f"}"/>
+        <line x1="128" y1="122" x2="140" y2="110" stroke="#37b7c2" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="141" cy="109" r="3" fill="#37b7c2"/>
+      </g>
+      <text x="128" y="182" text-anchor="middle" font-size="12" fill="#a9c2c2" font-family="Sarabun, sans-serif">ทุ่นเซนเซอร์</text>
+    </svg>
+    <p style="text-align:center;margin:6px 0 0;font-size:13.5px;color:var(--ink-dim)">
+      ผ่าน ${passed} จาก ${total} สถานการณ์ทดสอบ
+    </p>
+  </div>`;
+}
+
+/* --- Activity 4: block program + test scenarios --- */
+function renderApplyBlockProgram(body, act){
+  body.innerHTML = `<div id="a4host"></div>
+    <div class="btn-row" style="justify-content:flex-start;margin-top:14px">
+      <button class="btn secondary" id="a4run">▶ รันทดสอบกับสถานการณ์ทั้ง 5</button>
+    </div>
+    <div id="a4results" style="margin-top:14px"></div>`;
+
+  function deriveCategory(label){
+    if(!label) return "ไม่ทราบสถานะ";
+    if(label.includes("วิกฤต")) return "วิกฤต";
+    if(label.includes("เฝ้าระวัง")) return "เฝ้าระวัง";
+    if(label.includes("ปกติ")) return "ปกติ";
+    return "ไม่ทราบสถานะ";
+  }
+
+  function runProgram(program, level){
+    const blockMap = {}; act.blockExercise.blocks.forEach(b=>blockMap[b.id]=b);
+    const units = [];
+    const consumed = new Set();
+    for(let idx=0; idx<program.length; idx++){
+      if(consumed.has(idx)) continue;
+      const b = blockMap[program[idx]];
+      if(b.kind==="logic"){
+        const isCrit = b.id==="p_ifcrit";
+        const test = isCrit ? (v=>v>=220) : (v=>v>=150);
+        const nextIdx = idx+1;
+        let actionLabel = null;
+        if(nextIdx < program.length){ actionLabel = blockMap[program[nextIdx]].label; consumed.add(nextIdx); }
+        units.push({ cond:true, test, category: deriveCategory(actionLabel) });
+      } else if(b.id==="p_normal"){
+        units.push({ cond:false, category:"ปกติ" });
+      }
+    }
+    for(const u of units){ if(u.cond && u.test(level)) return u.category; }
+    const fallback = units.find(u=>!u.cond);
+    return fallback ? fallback.category : "ไม่ทราบสถานะ";
+  }
+
+  const ctl = renderBlockEditor($("#a4host", body), act.blockExercise, null);
+
+  $("#a4run").onclick = ()=>{
+    const program = ctl.getProgram();
+    if(!ctl.isComplete()){
+      $("#a4results").innerHTML = `<p class="hint-box">กรุณาวางบล็อกให้ครบทั้ง ${act.blockExercise.blocks.length} บล็อกก่อนรันทดสอบ</p>`;
+      return;
+    }
+    let passed = 0;
+    const rows = act.testScenarios.map(sc=>{
+      const got = runProgram(program, sc.level);
+      const ok = got===sc.expected;
+      if(ok) passed++;
+      return `<tr><td>${sc.label}</td><td>${sc.expected}</td><td style="color:${ok?'#4fae7a':'#e0604f'}">${got}</td><td>${ok?'✅':'❌'}</td></tr>`;
+    }).join("");
+    $("#a4results").innerHTML = `
+      ${simGraphicHTML(passed === act.testScenarios.length, passed, act.testScenarios.length)}
+      <div class="metric ${passed===5?'pass':(passed<3?'fail':'')}" style="display:inline-block">
+        <div class="label">ผลการทดสอบ</div><div class="value">${passed} / 5 สถานการณ์ผ่าน</div>
+      </div>
+      <table class="hist" style="margin-top:10px">
+        <thead><tr><th>สถานการณ์ทดสอบ</th><th>ผลที่ควรได้</th><th>ผลจากโปรแกรมของคุณ</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+    state.apply.results.a4 = Math.round(passed/5*100);
+    $("#screen-apply #btnNext").disabled = false;
+  };
+}
+
+/* --- Activity 5: blend ratio --- */
+function renderApplyBlend(body, act){
+  if(state.a5===null) state.a5 = act.sliderDefault;
+  body.innerHTML = `
+    <div class="slider-row"><label>สัดส่วนข้อมูลสถานีกลางน้ำ (Blend %) <b id="a5v">${state.a5}</b> %</label>
+      <input type="range" id="a5s" min="${act.sliderMin}" max="${act.sliderMax}" step="1" value="${state.a5}"></div>
+    <div class="metric-row">
+      <div class="metric" id="a5lead"><div class="label">เวลานำหน้า (เป้าหมาย ≥ ${act.target.lead} นาที)</div><div class="value">-</div></div>
+      <div class="metric" id="a5acc"><div class="label">ความแม่นยำ (เป้าหมาย ≥ ${act.target.accuracy}%)</div><div class="value">-</div></div>
+    </div>`;
+
+  function update(){
+    const r = Number($("#a5s").value);
+    state.a5 = r;
+    $("#a5v").textContent = r;
+    const lead = 20 + 0.5*r;
+    const acc = 100 - 0.1*r;
+    const leadEl = $("#a5lead"), accEl = $("#a5acc");
+    leadEl.className = "metric " + (lead>=act.target.lead?"pass":"fail");
+    leadEl.querySelector(".value").textContent = lead.toFixed(1)+" นาที";
+    accEl.className = "metric " + (acc>=act.target.accuracy?"pass":"fail");
+    accEl.querySelector(".value").textContent = acc.toFixed(1)+"%";
+
+    let score;
+    if(lead>=act.target.lead && acc>=act.target.accuracy) score = 100;
+    else {
+      const shortLead = Math.max(0, act.target.lead-lead);
+      const shortAcc = Math.max(0, act.target.accuracy-acc);
+      score = clamp(100 - shortLead*2 - shortAcc*5, 0, 100);
+    }
+    state.apply.results.a5 = Math.round(score);
+  }
+  $("#a5s").oninput = update;
+  update();
+}
+
+/* =======================================================================
+   REFLECT
+   ======================================================================= */
+function renderReflect(){
+  showScreen("reflect");
+  const root = $("#screen-reflect");
+  const LIKERT = ["ไม่เห็นด้วยอย่างยิ่ง","ไม่เห็นด้วย","เฉย ๆ","เห็นด้วย","เห็นด้วยอย่างยิ่ง"];
+
+  const itemsHTML = REFLECT_ITEMS.map(item=>{
+    if(item.type==="likert"){
+      const val = state.reflect.answers[item.id];
+      return `
+        <div class="reflect-item">
+          <div class="q-text">${item.text}</div>
+          <div class="likert-row">
+            ${LIKERT.map((l,idx)=>`<div class="likert-opt ${val===idx+1?'selected':''}" data-id="${item.id}" data-val="${idx+1}">${l}</div>`).join("")}
+          </div>
+        </div>`;
+    } else {
+      const val = state.reflect.answers[item.id] || "";
+      return `
+        <div class="reflect-item">
+          <div class="q-text">${item.text}</div>
+          <textarea data-id="${item.id}" placeholder="พิมพ์คำตอบของคุณที่นี่...">${val}</textarea>
+        </div>`;
+    }
+  }).join("");
+
+  root.innerHTML = `
+    <div class="panel stage-reflect">
+      <div class="eyebrow"><span class="tag">REFLECT · ประเมินตนเอง</span>ขั้นตอนสุดท้าย</div>
+      <p>ตอบคำถามต่อไปนี้อย่างตรงไปตรงมา คำตอบของคุณจะถูกบันทึกไว้ในรายงานผล</p>
+      ${itemsHTML}
+      <div class="btn-row">
+        <button class="btn secondary" id="btnBack">ย้อนกลับ</button>
+        <button class="btn" id="btnSubmit" disabled>ส่งคำตอบและดูรายงานผล</button>
+      </div>
+      <div id="submitMsg" class="save-status"></div>
+    </div>`;
+
+  function refresh(){
+    const allDone = REFLECT_ITEMS.every(item=>{
+      const v = state.reflect.answers[item.id];
+      return item.type==="likert" ? !!v : (v && v.trim().length>0);
+    });
+    $("#btnSubmit", root).disabled = !allDone;
+  }
+
+  $$(".likert-opt", root).forEach(opt=>{
+    opt.onclick = ()=>{ state.reflect.answers[opt.dataset.id] = Number(opt.dataset.val); renderReflect(); };
+  });
+  $$("textarea", root).forEach(ta=>{
+    ta.oninput = ()=>{ state.reflect.answers[ta.dataset.id] = ta.value; refresh(); };
+  });
+  refresh();
+
+  $("#btnBack", root).onclick = ()=>{ state.apply.idx = APPLY_ACTIVITIES.length-1; renderApply(); };
+  $("#btnSubmit", root).onclick = async ()=>{
+    $("#btnSubmit", root).disabled = true;
+    $("#submitMsg", root).textContent = "กำลังบันทึกผล...";
+    await finalizeAndSubmit();
+  };
+}
+
+/* =======================================================================
+   SCORING
+   ======================================================================= */
+function scoreShow(){
+  const total = SHOW_QUESTIONS.length;
+  let correct = 0;
+  SHOW_QUESTIONS.forEach(q=>{ if(state.show.answers[q.id]===q.correct) correct++; });
+  return { correct, total, percent: Math.round(correct/total*100) };
+}
+
+function scoreLearn(){
+  const fractions = [];
+  const detail = { mcqCorrect:0, mcqTotal:0, blockAvg:[] };
+  LEARN_TASKS.forEach(task=>{
+    (task.questions||[]).forEach(q=>{
+      const ok = state.learn.answers[q.id]===q.correct ? 1 : 0;
+      fractions.push(ok);
+      detail.mcqTotal++; detail.mcqCorrect += ok;
+    });
+    if(task.blockExercise){
+      const bs = state.blocks[task.blockExercise.id] || { program:[] };
+      const frac = blockOrderFraction(bs.program, task.blockExercise.correctOrder);
+      fractions.push(frac);
+      detail.blockAvg.push(Math.round(frac*100));
+    }
+  });
+  const percent = Math.round(fractions.reduce((a,b)=>a+b,0)/fractions.length*100);
+  return { percent, detail };
+}
+
+function scoreApply(){
+  const vals = APPLY_ACTIVITIES.map(a=>state.apply.results[a.id]||0);
+  const percent = Math.round(vals.reduce((a,b)=>a+b,0)/vals.length);
+  return { percent, detail: vals };
+}
+
+function scoreReflect(){
+  const fractions = REFLECT_ITEMS.map(item=>{
+    const v = state.reflect.answers[item.id];
+    if(item.type==="likert") return v ? 1 : 0;
+    if(!v || v.trim().length===0) return 0;
+    const words = v.trim().split(/\s+/).length;
+    const hasKeyword = (item.keywords||[]).some(k=>v.includes(k));
+    if(words>=15 || hasKeyword) return 1;
+    if(words>=5) return 0.5;
+    return 0.25;
+  });
+  const percent = Math.round(fractions.reduce((a,b)=>a+b,0)/fractions.length*100);
+  return { percent };
+}
+
+function levelOf(overall){
+  if(overall>=85) return { n:4, name:"ระดับ 4 · ดีเยี่ยม (Advanced)" };
+  if(overall>=70) return { n:3, name:"ระดับ 3 · ดี (Proficient)" };
+  if(overall>=50) return { n:2, name:"ระดับ 2 · พื้นฐาน (Basic)" };
+  return { n:1, name:"ระดับ 1 · ควรพัฒนาเพิ่มเติม (Needs Improvement)" };
+}
+
+/* =======================================================================
+   SUBMIT + REPORT
+   ======================================================================= */
+async function finalizeAndSubmit(){
+  const show = scoreShow();
+  const learn = scoreLearn();
+  const apply = scoreApply();
+  const reflect = scoreReflect();
+  const overall = Math.round(show.percent*0.15 + learn.percent*0.35 + apply.percent*0.35 + reflect.percent*0.15);
+  const level = levelOf(overall);
+
+  state.report = { show, learn, apply, reflect, overall, level };
+
+  const elapsedMs = state.startedAt ? (Date.now() - state.startedAt) : 0;
+  const timedOut = elapsedMs > TEST_MINUTES * 60 * 1000;
+
+  // Payload shape matches the shared "Universal Google Sheet logger" Code.gs contract:
+  // top-level "sheet" selects the tab; nested objects (e.g. learn_detail) are auto-flattened
+  // by the script into columns like learn_detail_mcqCorrect, learn_detail_block1, etc.
+  const payload = {
+    sheet: SHEET_NAME,
+    timestamp: new Date().toISOString(),
+    scenario: "SmartFlood Sentinel",
+    user: state.student.name,
+    grade: state.student.grade,
+    show: show.percent,
+    show_detail: { correct: show.correct, total: show.total },
+    learn: learn.percent,
+    learn_detail: {
+      mcqCorrect: learn.detail.mcqCorrect,
+      mcqTotal: learn.detail.mcqTotal,
+      block1: learn.detail.blockAvg[0] ?? "",
+      block2: learn.detail.blockAvg[1] ?? "",
+      block3: learn.detail.blockAvg[2] ?? "",
+      block4: learn.detail.blockAvg[3] ?? "",
+      debugPercent: (state.debug["l7"] && state.debug["l7"].pct) ?? "",
+    },
+    apply: apply.percent,
+    apply_detail: {
+      a1: apply.detail[0] ?? "", a2: apply.detail[1] ?? "", a3: apply.detail[2] ?? "",
+      a4: apply.detail[3] ?? "", a5: apply.detail[4] ?? "",
+    },
+    reflect: reflect.percent,
+    overall: overall,
+    level: level.n,
+    levelName: level.name,
+    timedOut: timedOut,
+  };
+
+  let saveOk = false, saveMsg = "";
+  try{
+    const res = await fetch(WEBAPP_URL, { method:"POST", headers:{ "Content-Type":"text/plain" }, body: JSON.stringify(payload) });
+    const json = await res.json().catch(()=>({ result:"success" }));
+    saveOk = json.result === "success";
+    saveMsg = saveOk ? "บันทึกผลลงระบบเรียบร้อยแล้ว" : ("บันทึกไม่สำเร็จ: " + (json.error||"ไม่ทราบสาเหตุ"));
+  } catch(err){
+    saveMsg = "ไม่สามารถเชื่อมต่อระบบบันทึกผลได้ (ตรวจสอบอินเทอร์เน็ต/การเผยแพร่ Apps Script) — ผลลัพธ์ยังแสดงด้านล่างตามปกติ";
+  }
+
+  renderReport(saveOk, saveMsg);
+}
+
+function renderReport(saveOk, saveMsg){
+  showScreen("report");
+  const r = state.report;
+  const root = $("#screen-report");
+  root.innerHTML = `
+    <div class="panel">
+      <div class="eyebrow"><span class="tag">REPORT · รายงานผล</span>${state.student.name} · ${state.student.grade}</div>
+      <div class="score-hero">
+        <div>
+          <div class="score-num">${r.overall}%</div>
+          <div class="level-badge lv-${r.level.n}">${r.level.name}</div>
+        </div>
+        <div class="chart-box" id="reportChart" style="flex:1;min-width:260px"></div>
+      </div>
+      <div class="save-status ${saveOk?'ok':'err'}">${saveMsg}</div>
+    </div>
+
+    <div class="panel stage-show">
+      <h3>ส่วน Show · แสดงสิ่งที่รู้</h3>
+      <p>ตอบถูก ${r.show.correct} จาก ${r.show.total} ข้อ (${r.show.percent}%)</p>
+    </div>
+    <div class="panel stage-learn">
+      <h3>ส่วน Learn · เรียนรู้</h3>
+      <p>คะแนนรวม ${r.learn.percent}% — คำถามปรนัยถูก ${r.learn.detail.mcqCorrect}/${r.learn.detail.mcqTotal} ข้อ,
+      ความถูกต้องของการเรียงบล็อกคำสั่งแต่ละภาระงาน: ${r.learn.detail.blockAvg.map(v=>v+"%").join(", ")}</p>
+    </div>
+    <div class="panel stage-apply">
+      <h3>ส่วน Apply · ประยุกต์ใช้</h3>
+      <p>คะแนนรวม ${r.apply.percent}% จาก 5 กิจกรรม: ${APPLY_ACTIVITIES.map((a,idx)=>`กิจกรรมที่ ${idx+1} = ${r.apply.detail[idx]}%`).join(", ")}</p>
+    </div>
+    <div class="panel stage-reflect">
+      <h3>ส่วน Reflect · ประเมินตนเอง</h3>
+      <p>ความสมบูรณ์ของการตอบคำถามประเมินตนเอง ${r.reflect.percent}%</p>
+    </div>
+
+    <div class="panel">
+      <h3>ประวัติการทำแบบทดสอบของคุณ</h3>
+      <div id="histBox"><p class="save-status">กำลังโหลดประวัติ...</p></div>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn secondary" id="btnRetry">ทำแบบทดสอบใหม่อีกครั้ง</button>
+      </div>
+    </div>`;
+
+  renderBarChart("reportChart", {
+    labels: ["Show","Learn","Apply","Reflect"],
+    datasets: [{ label:"คะแนน (%)", data:[r.show.percent, r.learn.percent, r.apply.percent, r.reflect.percent],
+       colors:["#4f92c9","#3aa6a0","#d98b3f","#b385d6"] }]
+  });
+
+  loadHistory();
+
+  $("#btnRetry").onclick = ()=>{ window.location.reload(); };
+}
+
+async function loadHistory(){
+  const box = $("#histBox");
+  try{
+    const url = `${WEBAPP_URL}?action=history&sheet=${encodeURIComponent(SHEET_NAME)}&user=${encodeURIComponent(state.student.name)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+    const rows = (json && json.result === "success" && Array.isArray(json.rows)) ? json.rows : null;
+    if(!rows || rows.length===0){
+      box.innerHTML = `<p class="save-status">ยังไม่มีประวัติก่อนหน้าของ ${state.student.name}</p>`;
+      return;
+    }
+    box.innerHTML = `<table class="hist">
+      <thead><tr><th>วันเวลา</th><th>ระดับชั้น</th><th>รวม</th><th>ระดับคุณภาพ</th></tr></thead>
+      <tbody>${rows.map(row=>`<tr><td>${row.timestamp||''}</td><td>${row.grade||''}</td><td>${row.overall!==undefined?row.overall+'%':''}</td><td>${row.levelName||''}</td></tr>`).join("")}</tbody>
+    </table>`;
+  } catch(err){
+    box.innerHTML = `<p class="save-status err">ไม่สามารถโหลดประวัติได้ในขณะนี้</p>`;
+  }
+}
+
+/* =======================================================================
+   INIT
+   ======================================================================= */
+document.addEventListener("DOMContentLoaded", ()=>{
+  initGlossary();
+  initLogin();
+});
+
+</script>
+</body>
+</html>
